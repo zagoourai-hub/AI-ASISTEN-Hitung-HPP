@@ -94,7 +94,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content Area with Responsive Padding & Safe Area */}
-      <main className="flex-1 pl-0 lg:pl-64 transition-all duration-200 min-w-0">
+      <main
+        className={cn(
+          "min-w-0 flex-1 pl-0 transition-[padding-left] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          isSidebarOpen ? "lg:pl-64" : "lg:pl-20"
+        )}
+      >
         <div className="mx-auto max-w-7xl px-3.5 py-4 sm:px-6 sm:py-6 lg:px-8 pb-24 lg:pb-8">
           {children}
         </div>
