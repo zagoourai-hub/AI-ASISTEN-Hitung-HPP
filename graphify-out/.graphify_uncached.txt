@@ -1,0 +1,17 @@
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/analyze-prd/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/execute-prd/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/git-workflow/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/loop-engineering/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/nextjs-python/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/security-audit/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/test-fix-loop/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/test-live/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/.agents/skills/ui-clone/SKILL.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/AGENTS.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/CLAUDE.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/PRD.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/design/DESIGN.md
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/design/dashboard-ai-asistan.png
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/design/dashboard-harga.png
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/design/dashboard-produk.png
+/media/nopal-risfana/DATA/project/Web/AI Hitung Hpp/design/dashboard.png

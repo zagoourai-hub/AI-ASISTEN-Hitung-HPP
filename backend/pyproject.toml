@@ -1,0 +1,48 @@
+[project]
+name = "ai-hitung-hpp-backend"
+version = "0.1.0"
+description = "FastAPI backend for AI Hitung HPP"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic==1.19.1",
+    "asyncpg==0.31.0",
+    "fastapi==0.141.1",
+    "httpx==0.28.1",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.15.0",
+    "PyJWT==2.13.0",
+    "pwdlib[argon2]==0.3.1",
+    "sqlalchemy[asyncio]==2.0.52",
+    "structlog==26.1.0",
+    "uvicorn[standard]==0.52.4",
+]
+
+[dependency-groups]
+dev = [
+    "pyright==1.1.411",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.16.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pyright]
+include = ["app", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+venvPath = "."
+venv = ".venv"
+
+[tool.uv]
+package = false

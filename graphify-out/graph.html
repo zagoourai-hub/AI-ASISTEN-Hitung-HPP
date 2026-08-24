@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HPP Pintar v2.0 - Knowledge Graph</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { margin: 0; background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; overflow: hidden; }
+    #header { position: absolute; top: 16px; left: 16px; z-index: 10; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); padding: 12px 18px; border-radius: 8px; border: 1px solid #334155; }
+    h1 { font-size: 16px; margin: 0 0 4px 0; color: #38bdf8; }
+    p { font-size: 12px; margin: 0; color: #94a3b8; }
+    svg { width: 100vw; height: 100vh; }
+    .node text { font-size: 11px; fill: #e2e8f0; pointer-events: none; }
+    .link { stroke: #475569; stroke-opacity: 0.6; stroke-width: 1.5px; }
+    .legend { position: absolute; bottom: 16px; right: 16px; background: rgba(15, 23, 42, 0.85); padding: 12px; border-radius: 8px; border: 1px solid #334155; font-size: 12px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .legend-color { width: 12px; height: 12px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>HPP Pintar v2.0 Knowledge Graph</h1>
+    <p>28 Nodes · 36 Relationships · 4 Communities</p>
+  </div>
+  <div class="legend">
+    <div style="font-weight:600; margin-bottom:6px; color:#cbd5e1;">Communities</div>
+    <div class="legend-item"><div class="legend-color" style="background:#10b981;"></div>Core ERP & HPP Engine</div>
+    <div class="legend-item"><div class="legend-color" style="background:#3b82f6;"></div>UI/UX Design & Mockups</div>
+    <div class="legend-item"><div class="legend-color" style="background:#8b5cf6;"></div>Fullstack Architecture</div>
+    <div class="legend-item"><div class="legend-color" style="background:#f59e0b;"></div>AI Intelligence Layer</div>
+  </div>
+  <svg></svg>
+  <script>
+    const graph = {"nodes": [{"id": "prd_md", "label": "PRD.md (HPP Pintar v2.0)", "file_type": "document", "source_file": "PRD.md"}, {"id": "design_md", "label": "DESIGN.md (UI/UX Spec)", "file_type": "document", "source_file": "design/DESIGN.md"}, {"id": "agents_md", "label": "AGENTS.md (Zagoour Standards)", "file_type": "document", "source_file": "AGENTS.md"}, {"id": "claude_md", "label": "CLAUDE.md", "file_type": "document", "source_file": "CLAUDE.md"}, {"id": "mockup_dashboard", "label": "Mockup: Dashboard Overview", "file_type": "image", "source_file": "design/dashboard.png"}, {"id": "mockup_produk", "label": "Mockup: Detail Produk & Resep HPP", "file_type": "image", "source_file": "design/dashboard-produk.png"}, {"id": "mockup_harga", "label": "Mockup: Simulasi Harga Pintar", "file_type": "image", "source_file": "design/dashboard-harga.png"}, {"id": "mockup_ai", "label": "Mockup: AI Assistant Chat & Insight", "file_type": "image", "source_file": "design/dashboard-ai-asistan.png"}, {"id": "domain_hpp", "label": "HPP Engine (Costing & Recipe)", "file_type": "concept", "source_file": "PRD.md"}, {"id": "domain_pricing", "label": "Pricing Engine (Margin & Competitor)", "file_type": "concept", "source_file": "PRD.md"}, {"id": "domain_inventory", "label": "Inventory Engine (Stock & Unit Cost)", "file_type": "concept", "source_file": "PRD.md"}, {"id": "domain_pos_sales", "label": "POS & Sales Module", "file_type": "concept", "source_file": "PRD.md"}, {"id": "domain_finance", "label": "Finance Engine (P&L, Cashflow)", "file_type": "concept", "source_file": "PRD.md"}, {"id": "domain_ai_assistant", "label": "AI Intelligence Layer (OpenRouter / Gemini)", "file_type": "concept", "source_file": "PRD.md"}, {"id": "domain_auth_business", "label": "Auth & Multi-tenant Business", "file_type": "concept", "source_file": "PRD.md"}, {"id": "arch_frontend_nextjs", "label": "Frontend: Next.js App Router + TypeScript Strict", "file_type": "concept", "source_file": "AGENTS.md"}, {"id": "arch_backend_fastapi", "label": "Backend: FastAPI + Modular Monolith", "file_type": "concept", "source_file": "AGENTS.md"}, {"id": "arch_db_postgresql", "label": "Database: PostgreSQL + SQLAlchemy 2.x Async + Alembic", "file_type": "concept", "source_file": "AGENTS.md"}, {"id": "arch_api_openapi", "label": "Contract: OpenAPI Client Generation", "file_type": "concept", "source_file": "PRD.md"}, {"id": "arch_money_precision", "label": "Financial Precision: Decimal String / PostgreSQL NUMERIC", "file_type": "rationale", "source_file": "PRD.md"}, {"id": "arch_ai_dependency_rule", "label": "AI Outer-layer Dependency Isolation Rule", "file_type": "rationale", "source_file": "PRD.md"}, {"id": "design_system_tokens", "label": "Design Tokens: Clean Emerald & Neutral Palette", "file_type": "concept", "source_file": "design/DESIGN.md"}, {"id": "design_principles_decision_first", "label": "UX Principle: Decision-first & Numbers are the Hero", "file_type": "rationale", "source_file": "design/DESIGN.md"}, {"id": "design_target_gen_z", "label": "Target Persona: Gen Z UMKM Founder", "file_type": "concept", "source_file": "design/DESIGN.md"}, {"id": "entity_ingredient", "label": "Entity: Ingredient & Price History", "file_type": "concept", "source_file": "PRD.md"}, {"id": "entity_recipe", "label": "Entity: Recipe Version & Items", "file_type": "concept", "source_file": "PRD.md"}, {"id": "entity_product_cost", "label": "Entity: Product Cost Version (HPP Breakdown)", "file_type": "concept", "source_file": "PRD.md"}, {"id": "entity_recommendation", "label": "Entity: Price Recommendation Draft", "file_type": "concept", "source_file": "PRD.md"}], "edges": [{"source": "prd_md", "target": "domain_hpp", "relation": "specifies", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "domain_pricing", "relation": "specifies", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "domain_inventory", "relation": "specifies", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "domain_pos_sales", "relation": "specifies", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "domain_finance", "relation": "specifies", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "domain_ai_assistant", "relation": "specifies", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "arch_money_precision", "relation": "enforces", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "prd_md", "target": "arch_ai_dependency_rule", "relation": "enforces", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_inventory", "target": "domain_hpp", "relation": "provides_actual_costs_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_hpp", "target": "domain_pricing", "relation": "feeds_product_cost_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_pricing", "target": "domain_pos_sales", "relation": "determines_selling_price_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_pos_sales", "target": "domain_finance", "relation": "generates_revenue_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_pos_sales", "target": "domain_inventory", "relation": "triggers_stock_deduction_in", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_finance", "target": "domain_ai_assistant", "relation": "provides_financial_data_to", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_ai_assistant", "target": "domain_pricing", "relation": "recommends_adjustments_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "entity_ingredient", "target": "domain_hpp", "relation": "is_calculated_by", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "entity_recipe", "target": "domain_hpp", "relation": "defines_composition_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "entity_product_cost", "target": "domain_pricing", "relation": "sets_baseline_for", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "domain_ai_assistant", "target": "entity_recommendation", "relation": "generates", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "agents_md", "target": "arch_frontend_nextjs", "relation": "prescribes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "AGENTS.md"}, {"source": "agents_md", "target": "arch_backend_fastapi", "relation": "prescribes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "AGENTS.md"}, {"source": "agents_md", "target": "arch_db_postgresql", "relation": "prescribes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "AGENTS.md"}, {"source": "arch_frontend_nextjs", "target": "arch_api_openapi", "relation": "consumes_types_from", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "arch_backend_fastapi", "target": "arch_api_openapi", "relation": "exposes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "PRD.md"}, {"source": "arch_backend_fastapi", "target": "arch_db_postgresql", "relation": "queries_via_asyncpg", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "AGENTS.md"}, {"source": "design_md", "target": "design_principles_decision_first", "relation": "defines", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/DESIGN.md"}, {"source": "design_md", "target": "design_system_tokens", "relation": "defines", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/DESIGN.md"}, {"source": "design_md", "target": "design_target_gen_z", "relation": "targets", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/DESIGN.md"}, {"source": "mockup_dashboard", "target": "design_principles_decision_first", "relation": "implements", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/dashboard.png"}, {"source": "mockup_produk", "target": "domain_hpp", "relation": "visualizes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/dashboard-produk.png"}, {"source": "mockup_harga", "target": "domain_pricing", "relation": "visualizes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/dashboard-harga.png"}, {"source": "mockup_ai", "target": "domain_ai_assistant", "relation": "visualizes", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "design/dashboard-ai-asistan.png"}, {"source": "mockup_dashboard", "target": "arch_frontend_nextjs", "relation": "rendered_by", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "design/dashboard.png"}, {"source": "mockup_produk", "target": "arch_frontend_nextjs", "relation": "rendered_by", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "design/dashboard-produk.png"}, {"source": "mockup_harga", "target": "arch_frontend_nextjs", "relation": "rendered_by", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "design/dashboard-harga.png"}, {"source": "mockup_ai", "target": "arch_frontend_nextjs", "relation": "rendered_by", "confidence": "INFERRED", "confidence_score": 0.95, "source_file": "design/dashboard-ai-asistan.png"}], "communities": {"0": ["prd_md", "domain_hpp", "domain_pricing", "domain_inventory", "domain_pos_sales", "domain_finance", "entity_ingredient", "entity_recipe", "entity_product_cost", "arch_money_precision"], "1": ["design_md", "design_principles_decision_first", "design_system_tokens", "design_target_gen_z", "mockup_dashboard", "mockup_produk", "mockup_harga", "mockup_ai"], "2": ["agents_md", "claude_md", "arch_frontend_nextjs", "arch_backend_fastapi", "arch_db_postgresql", "arch_api_openapi", "domain_auth_business"], "3": ["domain_ai_assistant", "arch_ai_dependency_rule", "entity_recommendation"]}, "labels": {"0": "Core ERP & HPP Calculation Engine", "1": "UI/UX Design System & Product Mockups", "2": "Zagoour Fullstack Stack Architecture", "3": "AI Assistant & Advisory Layer"}, "gods": [{"id": "domain_hpp", "label": "HPP Engine (Costing & Recipe)", "degree": 6, "description": "Central core of product costing connecting inventory, pricing, recipes, and UI"}, {"id": "arch_frontend_nextjs", "label": "Frontend: Next.js App Router + TypeScript Strict", "degree": 6, "description": "Main user interaction and rendering layer for all dashboard mockups and API consumption"}, {"id": "domain_pricing", "label": "Pricing Engine (Margin & Competitor)", "degree": 5, "description": "Bridges costing calculations with sales transactions and AI recommendations"}], "surprises": [{"node1": "AI Intelligence Layer", "node2": "Finance Engine", "relation": "provides_financial_data_to", "description": "AI operates purely on the outer perimeter, consuming financial engine outputs without domain logic depending on AI."}, {"node1": "Financial Precision Rule", "node2": "Frontend Next.js", "relation": "presentation_only_contract", "description": "Authoritative calculations strictly reserved for Python Decimal / PostgreSQL Numeric; Next.js frontend strictly formats presentation string."}], "questions": ["Bagaimana data mengalir dari Inventory (pembelian bahan) sampai ke Rekomendasi AI dan Penetapan Harga?", "Mengapa arsitektur memisahkan AI sebagai outer layer dan melarang domain finansial bergantung pada AI?", "Bagaimana kesesuaian antara 4 mockups di design/ dengan spesifikasi teknis di PRD dan AGENTS.md?"]};
+    const colorMap = {
+      0: '#10b981',
+      1: '#3b82f6',
+      2: '#8b5cf6',
+      3: '#f59e0b'
+    };
+    const nodeCommMap = {};
+    Object.entries(graph.communities).forEach(([commId, nodeIds]) => {
+      nodeIds.forEach(id => nodeCommMap[id] = parseInt(commId));
+    });
+
+    const svg = d3.select("svg"),
+          width = window.innerWidth,
+          height = window.innerHeight;
+
+    const g = svg.append("g");
+    svg.call(d3.zoom().scaleExtent([0.2, 4]).on("zoom", (e) => g.attr("transform", e.transform)));
+
+    const simulation = d3.forceSimulation(graph.nodes)
+      .force("link", d3.forceLink(graph.edges).id(d => d.id).distance(120))
+      .force("charge", d3.forceManyBody().strength(-350))
+      .force("center", d3.forceCenter(width / 2, height / 2))
+      .force("collision", d3.forceCollide().radius(30));
+
+    const link = g.append("g")
+      .attr("class", "links")
+      .selectAll("line")
+      .data(graph.edges)
+      .enter().append("line")
+      .attr("class", "link");
+
+    const node = g.append("g")
+      .attr("class", "nodes")
+      .selectAll("g")
+      .data(graph.nodes)
+      .enter().append("g")
+      .attr("class", "node")
+      .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended));
+
+    node.append("circle")
+      .attr("r", d => d.file_type === 'concept' ? 10 : d.file_type === 'document' ? 12 : 8)
+      .attr("fill", d => colorMap[nodeCommMap[d.id] ?? 0])
+      .attr("stroke", "#ffffff")
+      .attr("stroke-width", 1.5);
+
+    node.append("text")
+      .attr("dx", 14)
+      .attr("dy", ".35em")
+      .text(d => d.label);
+
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+      node
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+  </script>
+</body>
+</html>
