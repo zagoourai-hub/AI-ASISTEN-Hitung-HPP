@@ -1,92 +1,86 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useForm, useWatch } from "react-hook-form"
+import { CheckCircle2, ChevronDown } from "lucide-react"
 import { Header } from "@/components/header"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { apiClient, ApiError } from "@/lib/api/client"
 import { ErrorBanner, LoadingSpinner } from "@/components/feedback/feedback-states"
-import { CheckCircle2, ChevronDown } from "lucide-react"
+import { getBusiness, updateBusiness, type BusinessUpdatePayload } from "@/lib/api/business"
+import { ApiError } from "@/lib/api/client"
+import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
+import { parseDecimalToNumber } from "@/lib/format"
+import type { RoundingStrategy } from "@/lib/types/api"
 
-interface BusinessProfile {
-  id: string
+interface BusinessFormValues {
   name: string
-  currency: string
-  pricing_setting?: {
-    default_target_margin: string
-    rounding_strategy: "NONE" | "NEAREST_100" | "CUSTOM"
-    custom_rounding?: string
-  }
+  targetMargin: string
+  roundingStrategy: RoundingStrategy
+  customRounding: string
+}
+
+const DEFAULT_VALUES: BusinessFormValues = {
+  name: "",
+  targetMargin: "30",
+  roundingStrategy: "NEAREST_100",
+  customRounding: "",
 }
 
 export default function BusinessSettingsPage() {
-  const [, setBusiness] = useState<BusinessProfile | null>(null)
-  const [name, setName] = useState("")
-  const [targetMargin, setTargetMargin] = useState("30")
-  const [roundingStrategy, setRoundingStrategy] = useState<"NONE" | "NEAREST_100" | "CUSTOM">("NEAREST_100")
-  const [customRounding, setCustomRounding] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState<{ code?: string; message: string } | null>(null)
+  const queryClient = useQueryClient()
+  const form = useForm<BusinessFormValues>({ defaultValues: DEFAULT_VALUES })
+  const businessQuery = useQuery({
+    queryKey: ["business"],
+    queryFn: ({ signal }) => getBusiness(signal),
+  })
+  const roundingStrategy = useWatch({ control: form.control, name: "roundingStrategy" })
+  const mutation = useMutation({
+    mutationFn: (values: BusinessFormValues): Promise<unknown> => {
+      const payload: BusinessUpdatePayload = {
+        name: values.name.trim(),
+        default_target_margin: (Number(values.targetMargin) / 100).toFixed(4),
+        rounding_strategy: values.roundingStrategy,
+        custom_rounding: values.roundingStrategy === "CUSTOM" ? values.customRounding : null,
+      }
+      return updateBusiness(payload)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["business"] }),
+        queryClient.invalidateQueries({ queryKey: ["auth", "me"] }),
+      ])
+    },
+  })
 
   useEffect(() => {
-    async function loadBusiness() {
-      try {
-        const res = await apiClient<{ data: BusinessProfile }>("/business")
-        setBusiness(res.data)
-        setName(res.data.name)
-        if (res.data.pricing_setting) {
-          const marginNum = parseFloat(res.data.pricing_setting.default_target_margin) * 100
-          setTargetMargin(isNaN(marginNum) ? "30" : marginNum.toString())
-          setRoundingStrategy(res.data.pricing_setting.rounding_strategy || "NEAREST_100")
-          setCustomRounding(res.data.pricing_setting.custom_rounding || "")
-        }
-      } catch {
-        // Fallback for mock preview if backend is disconnected
-        setName("Founder Space")
-        setTargetMargin("30")
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadBusiness()
-  }, [])
+    const business = businessQuery.data?.data
+    if (!business) return
+    const setting = business.pricing_setting
+    form.reset({
+      name: business.name,
+      targetMargin: String(parseDecimalToNumber(business.default_target_margin) * 100),
+      roundingStrategy: setting?.rounding_strategy ?? "NEAREST_100",
+      customRounding: setting?.custom_rounding ?? "",
+    })
+  }, [businessQuery.data, form])
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    setError(null)
-    setSuccess(false)
+  if (businessQuery.isPending) return <LoadingSpinner label="Memuat pengaturan bisnis..." />
 
-    try {
-      const marginDecimal = (parseFloat(targetMargin) / 100).toFixed(4)
-      await apiClient("/business", {
-        method: "PATCH",
-        body: JSON.stringify({
-          name,
-          pricing_setting: {
-            default_target_margin: marginDecimal,
-            rounding_strategy: roundingStrategy,
-            custom_rounding: roundingStrategy === "CUSTOM" ? customRounding : null,
-          },
-        }),
-      })
-      setSuccess(true)
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError({ code: err.code, message: err.message })
-      } else {
-        setError({ message: "Gagal menyimpan pengaturan bisnis." })
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
+  const queryError = businessQuery.error instanceof ApiError ? businessQuery.error : null
+  const mutationError = mutation.error instanceof ApiError ? mutation.error : null
+  const error = queryError ?? mutationError
 
-  if (loading) {
-    return <LoadingSpinner label="Memuat pengaturan bisnis..." />
+  if (queryError) {
+    return (
+      <ErrorBanner
+        code={queryError.code}
+        message={mapSemanticErrorToMessage(queryError.code, queryError.message)}
+        onRetry={() => businessQuery.refetch()}
+      />
+    )
   }
 
   return (
@@ -97,20 +91,28 @@ export default function BusinessSettingsPage() {
         showPeriodSelector={false}
       />
 
-      {error && <ErrorBanner code={error.code} message={error.message} />}
+      {error && (
+        <ErrorBanner
+          code={error.code}
+          message={mapSemanticErrorToMessage(error.code, error.message)}
+          onRetry={() => mutation.reset()}
+        />
+      )}
 
-      {success && (
+      {mutation.isSuccess && (
         <div
           role="status"
-          className="flex items-center gap-2 rounded-xl border border-[#DDF5E7] bg-[#EEF9F2] p-3.5 text-xs font-semibold text-[#14804A] dark:border-[#10673C44] dark:bg-[#10673C22] dark:text-[#1EA65E]"
+          className="flex items-center gap-2 rounded-xl border border-[#DDF5E7] bg-[#EEF9F2] p-3.5 text-xs font-semibold text-[#148A4E]"
         >
           <CheckCircle2 className="h-4 w-4" />
-          <span>Pengaturan bisnis berhasil diperbarui!</span>
+          <span>Pengaturan bisnis berhasil diperbarui.</span>
         </div>
       )}
 
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* Profile Card */}
+      <form
+        onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+        className="space-y-6"
+      >
         <section aria-label="Profil Usaha">
           <Card className="space-y-4">
             <CardHeader className="p-0 pb-2">
@@ -118,31 +120,35 @@ export default function BusinessSettingsPage() {
             </CardHeader>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 text-xs">
-                <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
+                <label htmlFor="business-name" className="font-semibold">
                   Nama Bisnis
                 </label>
                 <Input
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  id="business-name"
                   placeholder="Nama Brand / Usaha"
+                  {...form.register("name", { required: "Nama bisnis wajib diisi." })}
                 />
+                {form.formState.errors.name && (
+                  <p role="alert" className="text-[11px] text-[#DC2626]">
+                    {form.formState.errors.name.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5 text-xs">
-                <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
+                <label htmlFor="business-currency" className="font-semibold">
                   Mata Uang (MVP)
                 </label>
                 <Input
+                  id="business-currency"
                   disabled
                   value="IDR (Rupiah Indonesia)"
-                  className="bg-[#F3F5F4] dark:bg-[#232826] cursor-not-allowed"
+                  className="cursor-not-allowed bg-[#F3F5F4] dark:bg-[#232826]"
                 />
               </div>
             </div>
           </Card>
         </section>
 
-        {/* Pricing Strategy Card */}
         <section aria-label="Pengaturan Margin & Pembulatan">
           <Card className="space-y-4">
             <CardHeader className="p-0 pb-2">
@@ -150,39 +156,41 @@ export default function BusinessSettingsPage() {
             </CardHeader>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 text-xs">
-                <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
+                <label htmlFor="business-target-margin" className="font-semibold">
                   Target Margin Default (%)
                 </label>
                 <Input
-                  required
+                  id="business-target-margin"
                   type="number"
                   min="0"
                   max="99.9"
                   step="0.1"
-                  value={targetMargin}
-                  onChange={(e) => setTargetMargin(e.target.value)}
                   suffixNode="%"
+                  {...form.register("targetMargin", {
+                    required: "Target margin wajib diisi.",
+                    validate: (value) =>
+                      (Number(value) >= 0 && Number(value) < 100) ||
+                      "Margin harus 0-99.9%.",
+                  })}
                 />
-                <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                  Nilai acuan margin untuk rekomendasi harga produk baru.
-                </p>
+                {form.formState.errors.targetMargin && (
+                  <p role="alert" className="text-[11px] text-[#DC2626]">
+                    {form.formState.errors.targetMargin.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5 text-xs">
-                <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
+                <label htmlFor="business-rounding" className="font-semibold">
                   Strategi Pembulatan
                 </label>
                 <div className="relative flex items-center">
                   <select
-                    value={roundingStrategy}
-                    onChange={(e) =>
-                      setRoundingStrategy(
-                        e.target.value as "NONE" | "NEAREST_100" | "CUSTOM"
-                      )
-                    }
+                    id="business-rounding"
                     className="flex h-11 w-full appearance-none rounded-[12px] border border-[#E8ECE9] bg-[#FAFBFA] px-3.5 pr-9 text-xs font-medium text-[#161A18] shadow-xs focus-visible:border-[#14804A] focus-visible:bg-white focus-visible:outline-none dark:border-[#2B312E] dark:bg-[#161A18] dark:text-[#FAFBFA]"
+                    {...form.register("roundingStrategy")}
                   >
-                    <option value="NEAREST_100">Bulatkan ke Ratusan Terdekat (Contoh: 18.500)</option>
+                    <option value="NEAREST_100">Bulatkan ke Ratusan Terdekat</option>
                     <option value="NONE">Tanpa Pembulatan (Eksak)</option>
                     <option value="CUSTOM">Kustom</option>
                   </select>
@@ -192,14 +200,26 @@ export default function BusinessSettingsPage() {
 
               {roundingStrategy === "CUSTOM" && (
                 <div className="space-y-1.5 text-xs sm:col-span-2">
-                  <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                    Aturan Pembulatan Kustom
+                  <label htmlFor="business-custom-rounding" className="font-semibold">
+                    Kelipatan Pembulatan Kustom (Rp)
                   </label>
                   <Input
+                    id="business-custom-rounding"
+                    type="number"
+                    min="1"
+                    step="any"
                     placeholder="Contoh: 500 atau 1000"
-                    value={customRounding}
-                    onChange={(e) => setCustomRounding(e.target.value)}
+                    prefixNode="Rp"
+                    {...form.register("customRounding", {
+                      required: "Kelipatan kustom wajib diisi.",
+                      validate: (value) => Number(value) > 0 || "Harus lebih besar dari 0.",
+                    })}
                   />
+                  {form.formState.errors.customRounding && (
+                    <p role="alert" className="text-[11px] text-[#DC2626]">
+                      {form.formState.errors.customRounding.message}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -209,10 +229,10 @@ export default function BusinessSettingsPage() {
         <div className="flex justify-end">
           <Button
             type="submit"
-            disabled={saving}
+            disabled={mutation.isPending}
             className="rounded-[12px] bg-[#14804A] px-6 py-2.5 text-xs font-semibold text-white hover:bg-[#10673C]"
           >
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+            {mutation.isPending ? "Menyimpan..." : "Simpan Perubahan"}
           </Button>
         </div>
       </form>

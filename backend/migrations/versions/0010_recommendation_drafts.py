@@ -34,9 +34,7 @@ recommendation_status = postgresql.ENUM(
 
 
 def upgrade() -> None:
-    op.execute(
-        "CREATE TYPE recommendation_status AS ENUM ('DRAFT', 'APPLIED', 'DISMISSED')"
-    )
+    op.execute("CREATE TYPE recommendation_status AS ENUM ('DRAFT', 'APPLIED', 'DISMISSED')")
     op.create_table(
         "recommendation_drafts",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),

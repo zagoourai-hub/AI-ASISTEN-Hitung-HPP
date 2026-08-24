@@ -2,7 +2,7 @@
 
 Source PRD: `PRD.md`
 Profile/Stack: Next.js + TypeScript, FastAPI + Python, PostgreSQL, OpenAPI
-Last Updated: 2026-08-22 02:21 WIB
+Last Updated: 2026-08-25
 
 ## Scope Lock
 
@@ -15,10 +15,11 @@ Last Updated: 2026-08-22 02:21 WIB
 
 ## Summary
 
-- Total: 51
+- Total: 56
 - Frontend: 20 (20 completed, 0 pending)
 - Backend: 31 (31 completed, 0 pending)
-- Completed: 51
+- Integration: 5 (5 completed, 0 in progress, 0 pending, 0 blocked)
+- Completed: 56
 - In Progress: 0
 - Pending: 0
 - Blocked: 0
@@ -29,6 +30,15 @@ Last Updated: 2026-08-22 02:21 WIB
 - Frontend: 20/20 task completed melalui handoff agent frontend; typecheck, lint, production build, dan Playwright evidence tercatat pada tracker.
 - Backend: 31/31 task completed; 101 tests, Ruff, Pyright, OpenAPI, Alembic offline, dan live PostgreSQL pilot tercatat pada tracker.
 - Dokumentasi ini disinkronkan setelah kedua layer selesai; tidak ada source task baru yang dibuka.
+
+## Integration Checkpoint — 2026-08-25
+
+- FE dan BE sebelumnya selesai terpisah. Integrasi live dibuka sebagai lima task atomik.
+- `INT-P0-T001` completed at source and static quality gates: Axios client, TanStack Query provider, Zustand state, typed contract, cookie session forwarding, and FastAPI business route are wired.
+- Runtime live tersedia melalui Docker Compose: PostgreSQL 16 Alpine dan FastAPI backend memakai named volume serta healthcheck; Next.js tetap berjalan dari workspace pada `:3000`; local secrets dibuat runtime-only dan tidak dicetak atau dikomit.
+- Live smoke menemukan dan memperbaiki tiga response-path `MissingGreenlet` pada ingredient/product/recipe creation serta action bar HPP mobile yang tertutup bottom navigation.
+- Browser flow register -> session -> settings -> logout -> login -> ingredient -> product -> draft recipe -> activate -> HPP -> pricing recommendation -> discount simulation lulus pada desktop dan mobile; current tab console error 0 dan request API MVP expected 2xx.
+- Dependency install audited `SAFE_NO_KNOWN_IOC`; package lifecycle scripts tidak dijalankan.
 
 ## Phase Gates
 
@@ -105,10 +115,22 @@ Stack: FastAPI + Python typed, SQLAlchemy 2.x async, Alembic, PostgreSQL
 | BE-P4-T003 | Phase 4 | BE | completed | Verifikasi pagination, query performance, p95 target, timeout handling, dan database conflict behavior pada dataset pilot | BE-P3-T003, BE-P3-T005 | 101 backend tests passed; live ephemeral PostgreSQL 16 pilot dataset 100 products, 100 variants, 100 ingredients, 10 overheads; HPP calculation p95 11.60 ms and HPP history p95 8.30 ms (<500 ms); timeout config/504 sanitization and database conflict behavior verified; Alembic full offline upgrade/downgrade passed | Live p95 executed against an ephemeral PostgreSQL 16 runtime; auth transaction boundary fixed after real DB smoke caught SQLAlchemy autobegin conflict; temporary runtime removed |
 | BE-P4-T004 | Phase 4 | BE | completed | Lengkapi migration/backup-restore runbook, structured logging, requestId, OpenAPI export, dan CI verification command | BE-P4-T001, BE-P4-T002, BE-P4-T003 | 101 backend tests passed; Ruff check/format and Pyright 0 errors; JSON structured formatter and requestId log/response parity tested; OpenAPI export validated; `scripts/verify_backend.sh` passed; Alembic full offline upgrade/downgrade generated | Runbook in `docs/backend-runbook.md`; no external provider required for CI verification |
 
+## [INT] Frontend–Backend Integration Tasks
+
+Stack: Next.js App Router + TypeScript strict + React Hook Form + TanStack Query + Zustand + Axios + FastAPI `/api/v1`
+
+| ID | Phase | Layer | Status | Task | Dependencies | Verification | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| INT-P0-T001 | Integration | FE/BE | completed | Kunci shared Axios API client, typed API contract, TanStack Query provider, Zustand client state, dan runtime API boundary | FE-P0-T002, BE-P0-T002, BE-P0-T005 | Dependency audit `SAFE_NO_KNOWN_IOC`; frontend `tsc`, ESLint, production build 13/13; backend 101 pytest, Ruff, Pyright; OpenAPI business path passed | Use httpOnly cookie forwarding; no client token storage |
+| INT-P0-T002 | Integration | FE | completed | Hubungkan auth/session dan seluruh form auth/settings memakai React Hook Form; hapus fallback mock/offline redirect | INT-P0-T001, FE-P1-T004, BE-P1-T005 | RHF/TanStack Query source connected; live register/session/settings/logout/login browser flow passed with httpOnly cookie; no mock/offline redirect | Runtime verified with Docker PostgreSQL + FastAPI |
+| INT-P1-T001 | Integration | FE | completed | Hubungkan ingredient, product, variant, recipe, dan conversion CRUD memakai TanStack Query mutations/invalidation | INT-P0-T002, FE-P2-T004, BE-P2-T007 | Live browser created ingredient, product, draft recipe, activated recipe, and reloaded API-backed lists; PostgreSQL persistence verified; service response eager-load regressions fixed | Tenant-scoped API responses preserved |
+| INT-P1-T002 | Integration | FE | completed | Hubungkan HPP history, pricing recommendation, discount simulation, dashboard, dan reports ke API server state | INT-P1-T001, FE-P3-T005, BE-P3-T005 | Live browser HPP/history, dashboard, pricing recommendation, and discount simulation passed with backend Decimal responses; reports remains roadmap because no MVP aggregate endpoint exists | No client-side authoritative calculation; reports intentionally post-MVP |
+| INT-P1-T003 | Integration | FE/BE | completed | Verifikasi MVP end-to-end live dengan PostgreSQL, console/network checks, responsive smoke, dan full quality gates | INT-P1-T002, BE-P4-T003, FE-P4-T003 | Docker Compose PostgreSQL/backend healthy; API/Next health 200; Alembic `0011_audit_logs` head; browser desktop/mobile evidence; current-tab console 0 errors; backend 101 pytest/Ruff/Pyright; frontend tsc/ESLint/build 13/13; `git diff --check` passed | Integration MVP gate passed; reports/AI remain out of MVP scope |
+
 ## Execution Rules
 
-1. Section `[FE]` dan `[BE]` adalah satu-satunya sumber status atomic task.
-2. Tag layer pada setiap row wajib dipertahankan: `FE` atau `BE`.
+1. Section `[FE]`, `[BE]`, dan `[INT]` adalah sumber status atomic task.
+2. Tag layer pada setiap row wajib dipertahankan: `FE`, `BE`, atau `FE/BE`.
 3. Hanya satu task boleh `in_progress` pada satu waktu.
 4. Task berikutnya tidak dimulai sebelum verification task aktif berhasil.
 5. Semua perubahan schema production memakai Alembic.

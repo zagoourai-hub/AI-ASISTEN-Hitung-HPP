@@ -1,207 +1,38 @@
 "use client"
 
-import React, { useState } from "react"
+import { useEffect } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useForm } from "react-hook-form"
+import { X } from "lucide-react"
+import { createProduct } from "@/lib/api/catalog"
+import { ApiError } from "@/lib/api/client"
+import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { apiClient, ApiError } from "@/lib/api/client"
 import { ErrorBanner } from "@/components/feedback/feedback-states"
-import { X } from "lucide-react"
 
-interface ProductModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
+interface ProductFormValues {
+  name: string
+  category: string
+  variantName: string
+  sellingPrice: string
+  packagingCost: string
+  directCost: string
+  targetMargin: string
 }
+interface ProductModalProps { isOpen: boolean; onClose: () => void; onSuccess: () => void }
+const DEFAULT_VALUES: ProductFormValues = { name: "", category: "Minuman", variantName: "Regular", sellingPrice: "", packagingCost: "0", directCost: "0", targetMargin: "" }
 
 export function ProductModal({ isOpen, onClose, onSuccess }: ProductModalProps) {
-  const [name, setName] = useState("")
-  const [category, setCategory] = useState("Minuman")
-  const [variantName, setVariantName] = useState("Regular")
-  const [sellingPrice, setSellingPrice] = useState("")
-  const [packagingCost, setPackagingCost] = useState("0")
-  const [directCost, setDirectCost] = useState("0")
-  const [targetMargin, setTargetMargin] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<{ code?: string; message: string } | null>(null)
-
+  const queryClient = useQueryClient()
+  const form = useForm<ProductFormValues>({ defaultValues: DEFAULT_VALUES })
+  const mutation = useMutation({
+    mutationFn: (values: ProductFormValues) => createProduct({ name: values.name, category: values.category, variant: { name: values.variantName, selling_price: values.sellingPrice, packaging_cost: values.packagingCost || "0", direct_cost: values.directCost || "0", target_margin_override: values.targetMargin ? (Number(values.targetMargin) / 100).toFixed(4) : null } }),
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["products"] }); form.reset(DEFAULT_VALUES); onSuccess() },
+  })
+  const error = mutation.error instanceof ApiError ? mutation.error : null
+  useEffect(() => { if (isOpen) form.reset(DEFAULT_VALUES) }, [form, isOpen])
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-
-    try {
-      await apiClient("/products", {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          category,
-          variant: {
-            name: variantName,
-            selling_price: sellingPrice,
-            packaging_cost: packagingCost,
-            direct_cost: directCost,
-            target_margin_override: targetMargin ? (parseFloat(targetMargin) / 100).toFixed(4) : null,
-          },
-        }),
-      })
-      onSuccess()
-      onClose()
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError({ code: err.code, message: err.message })
-      } else {
-        onSuccess()
-        onClose()
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="w-full max-w-lg rounded-[20px] border border-[#E8ECE9] bg-white p-6 shadow-xl dark:border-[#2B312E] dark:bg-[#161A18]"
-      >
-        <div className="flex items-center justify-between pb-4 border-b border-[#E8ECE9] dark:border-[#2B312E]">
-          <h2 className="text-base font-bold text-[#161A18] dark:text-[#FAFBFA]">
-            Tambah Produk Baru
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-[#737B76] hover:bg-[#F3F5F4] dark:text-[#98A09B]"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {error && (
-          <div className="mt-4">
-            <ErrorBanner code={error.code} message={error.message} />
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4 text-xs">
-          <div className="space-y-1.5">
-            <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-              Nama Produk
-            </label>
-            <Input
-              required
-              placeholder="Contoh: Es Kopi Susu Aren"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                Kategori
-              </label>
-              <Input
-                required
-                placeholder="Contoh: Minuman"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                Nama Varian Awal
-              </label>
-              <Input
-                required
-                placeholder="Contoh: Regular / 16 oz"
-                value={variantName}
-                onChange={(e) => setVariantName(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-[#E8ECE9] bg-[#FAFBFA] p-3.5 space-y-3 dark:border-[#2B312E] dark:bg-[#111315]">
-            <p className="font-bold text-[#14804A] dark:text-[#1EA65E]">
-              Harga & Biaya Langsung Varian
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-[#737B76]">
-                  Harga Jual (IDR)
-                </label>
-                <Input
-                  required
-                  type="number"
-                  placeholder="18000"
-                  prefixNode="Rp"
-                  value={sellingPrice}
-                  onChange={(e) => setSellingPrice(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-[#737B76]">
-                  Target Margin Khusus (%)
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  max="99.9"
-                  placeholder="Default bisnis"
-                  suffixNode="%"
-                  value={targetMargin}
-                  onChange={(e) => setTargetMargin(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-[#737B76]">
-                  Biaya Kemasan (IDR)
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="850"
-                  prefixNode="Rp"
-                  value={packagingCost}
-                  onChange={(e) => setPackagingCost(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-medium text-[#737B76]">
-                  Biaya Langsung / TK (IDR)
-                </label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="500"
-                  prefixNode="Rp"
-                  value={directCost}
-                  onChange={(e) => setDirectCost(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={onClose}>
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              disabled={loading}
-              className="bg-[#14804A] hover:bg-[#10673C] text-white"
-            >
-              {loading ? "Menyimpan..." : "Simpan Produk"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"><div role="dialog" aria-modal="true" aria-labelledby="product-modal-title" className="w-full max-w-lg rounded-[20px] border border-[#E8ECE9] bg-white p-6 shadow-xl dark:border-[#2B312E] dark:bg-[#161A18]"><div className="flex items-center justify-between border-b border-[#E8ECE9] pb-4 dark:border-[#2B312E]"><h2 id="product-modal-title" className="text-base font-bold">Tambah Produk Baru</h2><button type="button" onClick={onClose} aria-label="Tutup" className="rounded-lg p-1.5 text-[#737B76] hover:bg-[#F3F5F4]"><X className="h-4 w-4" /></button></div>{error && <div className="mt-4"><ErrorBanner code={error.code} message={mapSemanticErrorToMessage(error.code, error.message)} /></div>}<form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} className="mt-4 space-y-4 text-xs"><div className="space-y-1.5"><label htmlFor="product-name" className="font-semibold">Nama Produk</label><Input id="product-name" placeholder="Contoh: Es Kopi Susu Aren" {...form.register("name", { required: "Nama produk wajib diisi." })} />{form.formState.errors.name && <p role="alert" className="text-[11px] text-[#DC2626]">{form.formState.errors.name.message}</p>}</div><div className="grid grid-cols-2 gap-3"><div className="space-y-1.5"><label htmlFor="product-category" className="font-semibold">Kategori</label><Input id="product-category" {...form.register("category", { required: "Kategori wajib diisi." })} /></div><div className="space-y-1.5"><label htmlFor="variant-name" className="font-semibold">Nama Varian Awal</label><Input id="variant-name" {...form.register("variantName", { required: "Nama varian wajib diisi." })} /></div></div><div className="space-y-3 rounded-xl border border-[#E8ECE9] bg-[#FAFBFA] p-3.5 dark:border-[#2B312E] dark:bg-[#111315]"><p className="font-bold text-[#14804A]">Harga & Biaya Varian</p><div className="grid grid-cols-2 gap-3"><div className="space-y-1"><label htmlFor="selling-price" className="text-[11px] font-medium">Harga Jual (IDR)</label><Input id="selling-price" type="number" min="0" step="any" prefixNode="Rp" {...form.register("sellingPrice", { required: "Harga jual wajib diisi.", validate: (value) => Number(value) >= 0 || "Harga tidak valid." })} /></div><div className="space-y-1"><label htmlFor="target-margin" className="text-[11px] font-medium">Target Margin (%)</label><Input id="target-margin" type="number" min="0" max="99.9" step="0.1" suffixNode="%" {...form.register("targetMargin", { validate: (value) => !value || (Number(value) >= 0 && Number(value) < 100) || "Margin harus 0-99.9%." })} /></div></div><div className="grid grid-cols-2 gap-3"><div className="space-y-1"><label htmlFor="packaging-cost" className="text-[11px] font-medium">Biaya Kemasan</label><Input id="packaging-cost" type="number" min="0" step="any" prefixNode="Rp" {...form.register("packagingCost")} /></div><div className="space-y-1"><label htmlFor="direct-cost" className="text-[11px] font-medium">Biaya Langsung</label><Input id="direct-cost" type="number" min="0" step="any" prefixNode="Rp" {...form.register("directCost")} /></div></div></div><div className="flex justify-end gap-3 pt-2"><Button type="button" variant="outline" size="sm" onClick={onClose}>Batal</Button><Button type="submit" size="sm" disabled={mutation.isPending} className="bg-[#14804A] text-white hover:bg-[#10673C]">{mutation.isPending ? "Menyimpan..." : "Simpan Produk"}</Button></div></form></div></div>
 }

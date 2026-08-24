@@ -20,6 +20,7 @@ export type SemanticErrorCode =
   | "INVALID_RECIPE_STATE"
   | "INVALID_MARGIN"
   | "CALCULATION_CONFLICT"
+  | "RATE_LIMITED"
   | "INTERNAL_ERROR"
 
 export interface ApiErrorResponse {
@@ -119,21 +120,108 @@ export interface DiscountSimulationResponse {
 
 export interface ProductVariant {
   id: string
-  productId: string
+  product_id: string
   name: string
-  sellingPrice: DecimalString
-  packagingCost: DecimalString
-  directCost: DecimalString
-  targetMarginOverride?: DecimalString | null
-  activeCostVersion?: ProductCostVersion | null
+  selling_price: DecimalString
+  packaging_cost: DecimalString
+  direct_cost: DecimalString
+  target_margin_override?: DecimalString | null
+}
+
+export interface ProductCategory {
+  id: string
+  business_id: string
+  name: string
+  target_margin: DecimalString
 }
 
 export interface Product {
   id: string
-  businessId: string
-  categoryId: string | null
+  business_id: string
+  category_id: string | null
   name: string
   status: ProductStatus
-  createdAt: string
+  created_at: string
+  category: ProductCategory | null
   variants: ProductVariant[]
+}
+
+export interface IngredientPriceHistory {
+  id: string
+  ingredient_id: string
+  purchase_price: DecimalString
+  purchase_quantity: DecimalString
+  purchase_unit: string
+  unit_cost: DecimalString
+  effective_at: string
+}
+
+export interface IngredientUnitConversion {
+  id: string
+  ingredient_id: string
+  from_unit: string
+  to_unit: string
+  conversion_factor: DecimalString
+}
+
+export interface Ingredient {
+  id: string
+  business_id: string
+  name: string
+  category: string | null
+  base_unit: string
+  current_unit_cost: DecimalString | null
+  created_at: string
+  updated_at: string
+  archived_at: string | null
+  price_history?: IngredientPriceHistory[]
+  unit_conversions?: IngredientUnitConversion[]
+}
+
+export interface RecipeItem {
+  id: string
+  recipe_version_id: string
+  ingredient_id: string
+  quantity: DecimalString
+  unit: string
+}
+
+export interface RecipeVersion {
+  id: string
+  product_variant_id: string
+  version: number
+  status: RecipeStatus
+  change_reason: string | null
+  activated_at: string | null
+  created_at: string
+  items: RecipeItem[]
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  role: UserRole
+}
+
+export interface BusinessPricingSetting {
+  id?: string
+  business_id?: string
+  rounding_strategy: RoundingStrategy
+  custom_rounding: DecimalString | null
+}
+
+export interface BusinessProfile {
+  id: string
+  owner_id?: string
+  name: string
+  business_type: string
+  currency: "IDR"
+  timezone: string
+  default_target_margin: DecimalString
+  pricing_setting: BusinessPricingSetting | null
+}
+
+export interface AuthSessionResponse {
+  user: AuthUser
+  business: BusinessProfile
 }

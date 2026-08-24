@@ -1,3 +1,4 @@
+import axios, { type AxiosRequestConfig } from "axios"
 import { ENV } from "@/lib/env"
 import type { ApiErrorResponse } from "@/lib/types/api"
 
@@ -17,67 +18,39 @@ export class ApiError extends Error {
   }
 }
 
-interface RequestOptions extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>
+export interface RequestOptions extends Omit<AxiosRequestConfig, "data" | "url"> {
+  body?: unknown
 }
 
-/**
- * Unified API Client for Next.js App Router (Client & Server Components)
- */
+export const axiosClient = axios.create({
+  baseURL: ENV.API_BASE_URL,
+  withCredentials: true,
+  headers: { Accept: "application/json" },
+})
+
 export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { params, ...customConfig } = options
+  const { body, ...config } = options
 
-  let url = endpoint.startsWith("http")
-    ? endpoint
-    : `${ENV.API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`
-
-  if (params) {
-    const searchParams = new URLSearchParams()
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        searchParams.append(key, String(value))
-      }
+  try {
+    const response = await axiosClient.request<T>({
+      url: endpoint,
+      ...config,
+      data: body,
     })
-    const queryString = searchParams.toString()
-    if (queryString) {
-      url += (url.includes("?") ? "&" : "?") + queryString
-    }
-  }
+    return response.data
+  } catch (error: unknown) {
+    if (!axios.isAxiosError(error)) throw error
 
-  const headers = new Headers(customConfig.headers)
-  if (!headers.has("Content-Type") && !(customConfig.body instanceof FormData)) {
-    headers.set("Content-Type", "application/json")
-  }
-
-  const config: RequestInit = {
-    credentials: "include", // Ensure httpOnly cookies are forwarded
-    ...customConfig,
-    headers,
-  }
-
-  const response = await fetch(url, config)
-
-  if (!response.ok) {
-    let errorJson: ApiErrorResponse
-    try {
-      errorJson = await response.json()
-    } catch {
-      errorJson = {
-        error: {
-          code: "INTERNAL_ERROR",
-          message: `Request failed with status ${response.status}`,
-        },
+    const errorData = error.response?.data as ApiErrorResponse | undefined
+    throw new ApiError(
+      error.response?.status ?? 0,
+      errorData?.error ?? {
+        code: "INTERNAL_ERROR",
+        message: error.message || "Request failed.",
       }
-    }
-    throw new ApiError(response.status, errorJson.error)
+    )
   }
-
-  if (response.status === 204) {
-    return {} as T
-  }
-
-  return (await response.json()) as T
 }

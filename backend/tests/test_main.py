@@ -26,4 +26,5 @@ async def test_health_is_registered_under_api_v1_and_openapi() -> None:
     }
     assert openapi.status_code == 200
     assert "/api/v1/health" in openapi.json()["paths"]
+    assert "/api/v1/business" in openapi.json()["paths"]
     assert "/health" not in openapi.json()["paths"]

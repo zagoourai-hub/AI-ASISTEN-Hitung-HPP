@@ -18,7 +18,7 @@ export async function calculateVariantHpp(
     `/product-variants/${encodeURIComponent(variantId)}/hpp/calculations`,
     {
       method: "POST",
-      body: payload ? JSON.stringify(payload) : JSON.stringify({}),
+      body: payload ?? {},
     }
   )
   return response.data
@@ -31,7 +31,8 @@ export async function calculateVariantHpp(
 export async function getVariantHppHistory(
   variantId: string,
   page: number = 1,
-  pageSize: number = 20
+  pageSize: number = 20,
+  signal?: AbortSignal
 ): Promise<PaginatedResponse<ProductCostVersion>> {
   return apiClient<PaginatedResponse<ProductCostVersion>>(
     `/product-variants/${encodeURIComponent(variantId)}/hpp/history`,
@@ -39,8 +40,9 @@ export async function getVariantHppHistory(
       method: "GET",
       params: {
         page,
-        pageSize,
+        page_size: pageSize,
       },
+      signal,
     }
   )
 }

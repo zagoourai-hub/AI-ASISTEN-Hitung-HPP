@@ -21,7 +21,7 @@ export async function createPriceRecommendation(
     `/product-variants/${encodeURIComponent(variantId)}/pricing/recommendations`,
     {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: payload,
     }
   )
   return response.data
@@ -35,15 +35,11 @@ export async function simulateDiscount(
   variantId: string,
   payload: DiscountSimulationRequest
 ): Promise<DiscountSimulationResponse> {
-  if (payload.discountPercent >= 100) {
-    throw new Error("Diskon tidak boleh mencapai atau melebihi 100%.")
-  }
-
   const response = await apiClient<SingleResponse<DiscountSimulationResponse>>(
     `/product-variants/${encodeURIComponent(variantId)}/pricing/discount-simulations`,
     {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: payload,
     }
   )
   return response.data
@@ -54,15 +50,15 @@ export async function simulateDiscount(
  * Endpoint: PATCH /api/v1/products/{productId}/variants/{variantId} or PATCH /api/v1/product-variants/{variantId}
  */
 export async function applyRecommendedPrice(
+  productId: string,
   variantId: string,
   sellingPrice: DecimalString
 ): Promise<ProductVariant> {
-  const response = await apiClient<SingleResponse<ProductVariant>>(
-    `/product-variants/${encodeURIComponent(variantId)}/price`,
+  return apiClient<ProductVariant>(
+    `/products/${encodeURIComponent(productId)}/variants/${encodeURIComponent(variantId)}`,
     {
       method: "PATCH",
-      body: JSON.stringify({ sellingPrice }),
+      body: { selling_price: sellingPrice },
     }
   )
-  return response.data
 }

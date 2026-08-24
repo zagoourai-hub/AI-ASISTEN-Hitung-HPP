@@ -1,361 +1,128 @@
 "use client"
 
-import React from "react"
+import { useMemo } from "react"
 import Link from "next/link"
-import {
-  AlertTriangle,
-  Calculator,
-  Tag,
-  Target,
-  Package,
-  TrendingDown,
-  TrendingUp,
-  ChevronRight,
-  Sparkles,
-  ArrowUpRight,
-} from "lucide-react"
+import { useQueries, useQuery } from "@tanstack/react-query"
+import { AlertTriangle, Calculator, ChevronRight, Package, Tag, Target } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { Header } from "@/components/header"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { DonutChart } from "@/components/charts/donut-chart"
-import { TrendChart } from "@/components/charts/trend-chart"
+import { DonutChart, type DonutSegment } from "@/components/charts/donut-chart"
+import { EmptyState, ErrorBanner, LoadingSpinner } from "@/components/feedback/feedback-states"
+import { getBusiness } from "@/lib/api/business"
+import { listProducts } from "@/lib/api/catalog"
+import { getVariantHppHistory } from "@/lib/api/hpp"
+import { ApiError } from "@/lib/api/client"
+import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
+import { formatIDR, formatPercent, parseDecimalToNumber } from "@/lib/format"
+import type { ProductCostVersion } from "@/lib/types/api"
 
 export default function DashboardPage() {
-  const costBreakdownData = [
-    { name: "Bahan Baku", value: 56.4, color: "#10673C" },
-    { name: "Kemasan", value: 15.7, color: "#14804A" },
-    { name: "Tenaga Kerja", value: 12.1, color: "#1B9556" },
-    { name: "Overhead", value: 9.8, color: "#86EFAC" },
-    { name: "Lain-lain", value: 6.0, color: "#DDF5E7" },
-  ]
+  const productsQuery = useQuery({ queryKey: ["products"], queryFn: ({ signal }) => listProducts(signal) })
+  const businessQuery = useQuery({ queryKey: ["business"], queryFn: ({ signal }) => getBusiness(signal) })
+  const products = productsQuery.data?.data
+  const variants = useMemo(
+    () => (products ?? []).flatMap((product) => product.variants.map((variant) => ({ product, variant }))),
+    [products]
+  )
+  const costQueries = useQueries({
+    queries: variants.map(({ variant }) => ({
+      queryKey: ["hpp-history", variant.id],
+      queryFn: ({ signal }: { signal: AbortSignal }) => getVariantHppHistory(variant.id, 1, 1, signal),
+      enabled: Boolean(products),
+    })),
+  })
+  const costEntries = useMemo(
+    () => variants.map(({ product, variant }, index) => ({ product, variant, cost: costQueries[index]?.data?.data[0] ?? null })),
+    [costQueries, variants]
+  )
+  const loadedCosts = costEntries.filter((entry): entry is typeof entry & { cost: ProductCostVersion } => entry.cost !== null)
+  const targetMargin = parseDecimalToNumber(businessQuery.data?.data.default_target_margin) * 100
+  const activeProducts = (products ?? []).filter((product) => product.status === "ACTIVE")
+  const metrics = useMemo(() => {
+    const average = (values: number[]) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0
+    const hppValues = loadedCosts.map(({ cost }) => parseDecimalToNumber(cost.fullHpp))
+    const sellingValues = variants.map(({ variant }) => parseDecimalToNumber(variant.selling_price))
+    const margins = loadedCosts.flatMap(({ variant, cost }) => {
+      const price = parseDecimalToNumber(variant.selling_price)
+      const hpp = parseDecimalToNumber(cost.fullHpp)
+      return price > 0 ? [((price - hpp) / price) * 100] : []
+    })
+    return {
+      averageHpp: average(hppValues),
+      averageSellingPrice: average(sellingValues),
+      averageMargin: average(margins),
+    }
+  }, [loadedCosts, variants])
+  const attentionEntries = loadedCosts.filter(({ product, variant, cost }) => {
+    const price = parseDecimalToNumber(variant.selling_price)
+    const hpp = parseDecimalToNumber(cost.fullHpp)
+    const margin = price > 0 ? ((price - hpp) / price) * 100 : 0
+    const productTarget = parseDecimalToNumber(variant.target_margin_override ?? product.category?.target_margin) * 100 || targetMargin
+    return margin < productTarget
+  })
+  const breakdown = useMemo(() => {
+    const totals = loadedCosts.reduce(
+      (sum, { cost }) => ({
+        ingredient: sum.ingredient + parseDecimalToNumber(cost.ingredientCost),
+        packaging: sum.packaging + parseDecimalToNumber(cost.packagingCost),
+        direct: sum.direct + parseDecimalToNumber(cost.directCost),
+        overhead: sum.overhead + parseDecimalToNumber(cost.overheadCost),
+      }),
+      { ingredient: 0, packaging: 0, direct: 0, overhead: 0 }
+    )
+    const total = totals.ingredient + totals.packaging + totals.direct + totals.overhead || 1
+    const segment = (name: string, value: number, color: string): DonutSegment => ({ name, value: (value / total) * 100, amount: formatIDR(value), color })
+    return [
+      segment("Bahan Baku", totals.ingredient, "#10673C"),
+      segment("Kemasan", totals.packaging, "#14804A"),
+      segment("Biaya Langsung", totals.direct, "#D97706"),
+      segment("Overhead", totals.overhead, "#737B76"),
+    ].filter((item) => item.value > 0)
+  }, [loadedCosts])
+
+  const queryError = productsQuery.error instanceof ApiError ? productsQuery.error : businessQuery.error instanceof ApiError ? businessQuery.error : null
+  if (productsQuery.isPending || businessQuery.isPending) return <LoadingSpinner label="Memuat dashboard..." />
+  if (queryError) return <ErrorBanner code={queryError.code} message={mapSemanticErrorToMessage(queryError.code, queryError.message)} onRetry={() => { productsQuery.refetch(); businessQuery.refetch() }} />
+
+  const isMarginBelowTarget = loadedCosts.length > 0 && metrics.averageMargin < targetMargin
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Header */}
-      <Header
-        title="Dashboard"
-        subtitle="Ringkasan performa bisnis dan insight HPP kamu hari ini."
-      />
+      <Header title="Dashboard" subtitle="Ringkasan performa bisnis dari data produk dan HPP backend." />
 
-      {/* Warning Alert Banner */}
-      <section aria-label="Peringatan Margin" className="flex items-start gap-4 rounded-[18px] border border-[#FED7AA] bg-[#FFFBEB] p-4 text-[#9A3412] dark:border-[#78350F] dark:bg-[#451A03]/30 dark:text-[#FDBA74]">
-        <div className="rounded-full bg-[#FEF3C7] p-2 text-[#D97706] dark:bg-[#78350F]">
-          <AlertTriangle className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-sm font-semibold text-[#9A3412] dark:text-[#FDBA74]">
-            Margin rata-rata turun di bawah target!
-          </h2>
-          <p className="mt-0.5 text-xs text-[#B45309] dark:text-[#FDBA74]/90">
-            Margin bulan ini 18.2% (target minimal 25%). Tinjau produk untuk tingkatkan profit.
-          </p>
-        </div>
-      </section>
+      {isMarginBelowTarget && (
+        <section aria-label="Peringatan Margin" className="flex items-start gap-4 rounded-[18px] border border-[#FED7AA] bg-[#FFFBEB] p-4 text-[#9A3412] dark:border-[#78350F] dark:bg-[#451A03]/30 dark:text-[#FDBA74]">
+          <div className="rounded-full bg-[#FEF3C7] p-2 text-[#D97706]"><AlertTriangle className="h-5 w-5" /></div>
+          <div><h2 className="text-sm font-semibold">Margin rata-rata berada di bawah target.</h2><p className="mt-0.5 text-xs">Margin saat ini {formatPercent(metrics.averageMargin)}; target bisnis {formatPercent(targetMargin)}.</p></div>
+        </section>
+      )}
 
-      {/* 4 Primary Metric Cards */}
       <section aria-label="Metrik Utama" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Metric 1: HPP Rata-rata */}
-        <Card className="flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-[#737B76] dark:text-[#98A09B]">
-                HPP Rata-rata
-              </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-[#161A18] tabular-nums dark:text-[#FAFBFA]">
-                Rp 6.380
-              </p>
-              <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                per unit
-              </p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]">
-              <Calculator className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#168A4E]">
-            <TrendingDown className="h-4 w-4" />
-            <span>2.4%</span>
-            <span className="text-[#737B76] dark:text-[#98A09B]">dari Apr 2025</span>
-          </div>
-        </Card>
-
-        {/* Metric 2: Harga Jual Rata-rata */}
-        <Card className="flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-[#737B76] dark:text-[#98A09B]">
-                Harga Jual Rata-rata
-              </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-[#161A18] tabular-nums dark:text-[#FAFBFA]">
-                Rp 11.870
-              </p>
-              <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                per unit
-              </p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]">
-              <Tag className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#168A4E]">
-            <TrendingUp className="h-4 w-4" />
-            <span>3.1%</span>
-            <span className="text-[#737B76] dark:text-[#98A09B]">dari Apr 2025</span>
-          </div>
-        </Card>
-
-        {/* Metric 3: Margin vs Target */}
-        <Card className="flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-[#737B76] dark:text-[#98A09B]">
-                Margin vs Target
-              </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-[#161A18] tabular-nums dark:text-[#FAFBFA]">
-                18.2%
-              </p>
-              <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                Target: ≥ 25%
-              </p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]">
-              <Target className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 space-y-1.5">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E8ECE9] dark:bg-[#2B312E]">
-              <div className="h-full w-[45%] rounded-full bg-[#DC2626]" />
-            </div>
-            <div className="flex items-center gap-1 text-xs font-medium text-[#DC2626]">
-              <span>-6.8%</span>
-              <span className="text-[#737B76] dark:text-[#98A09B]">di bawah target</span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Metric 4: Produk Aktif */}
-        <Card className="flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-[#737B76] dark:text-[#98A09B]">
-                Produk Aktif
-              </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-[#161A18] tabular-nums dark:text-[#FAFBFA]">
-                24
-              </p>
-              <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                produk
-              </p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]">
-              <Package className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#168A4E]">
-            <TrendingUp className="h-4 w-4" />
-            <span>2</span>
-            <span className="text-[#737B76] dark:text-[#98A09B]">dari Apr 2025</span>
-          </div>
-        </Card>
+        <MetricCard label="HPP Rata-rata" value={loadedCosts.length ? formatIDR(metrics.averageHpp) : "-"} caption={loadedCosts.length ? `${loadedCosts.length} varian memiliki HPP` : "Belum ada HPP dihitung"} Icon={Calculator} />
+        <MetricCard label="Harga Jual Rata-rata" value={variants.length ? formatIDR(metrics.averageSellingPrice) : "-"} caption={`${variants.length} varian produk`} Icon={Tag} />
+        <MetricCard label="Margin Rata-rata" value={loadedCosts.length ? formatPercent(metrics.averageMargin) : "-"} caption={loadedCosts.length ? `Target ${formatPercent(targetMargin)}` : "Hitung HPP untuk melihat margin"} Icon={Target} />
+        <MetricCard label="Produk Aktif" value={String(activeProducts.length)} caption={`${variants.length} varian terhubung`} Icon={Package} />
       </section>
 
-      {/* 3 Middle Columns */}
       <section aria-label="Analisis Biaya & Produk" className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Col 1: Produk Perlu Diperhatikan */}
         <Card className="flex flex-col justify-between">
-          <div>
-            <CardHeader className="p-0 pb-4">
-              <CardTitle>Produk Perlu Diperhatikan</CardTitle>
-            </CardHeader>
-            <div className="divide-y divide-[#E8ECE9] dark:divide-[#2B312E]">
-              {/* Product 1 */}
-              <Link
-                href="/products/1"
-                className="group flex items-center justify-between py-3 transition-colors hover:bg-[#FAFBFA] dark:hover:bg-[#1B201D] -mx-2 px-2 rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 overflow-hidden rounded-lg bg-[#F3F5F4] flex items-center justify-center text-lg">
-                    🧋
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#161A18] group-hover:text-[#14804A] dark:text-[#FAFBFA]">
-                      Es Kopi Susu Gula Aren
-                    </h3>
-                    <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                      Margin hanya 12.4%.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="destructive" className="text-[10px] font-semibold">
-                    Margin Rendah
-                  </Badge>
-                  <ChevronRight className="h-4 w-4 text-[#98A09B]" />
-                </div>
-              </Link>
-
-              {/* Product 2 */}
-              <Link
-                href="/products/2"
-                className="group flex items-center justify-between py-3 transition-colors hover:bg-[#FAFBFA] dark:hover:bg-[#1B201D] -mx-2 px-2 rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 overflow-hidden rounded-lg bg-[#F3F5F4] flex items-center justify-center text-lg">
-                    🍜
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#161A18] group-hover:text-[#14804A] dark:text-[#FAFBFA]">
-                      Mie Ayam Spesial
-                    </h3>
-                    <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                      Harga bahan utama naik 8%.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="warning" className="text-[10px] font-semibold">
-                    Biaya Naik
-                  </Badge>
-                  <ChevronRight className="h-4 w-4 text-[#98A09B]" />
-                </div>
-              </Link>
-
-              {/* Product 3 */}
-              <Link
-                href="/products/3"
-                className="group flex items-center justify-between py-3 transition-colors hover:bg-[#FAFBFA] dark:hover:bg-[#1B201D] -mx-2 px-2 rounded-xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 overflow-hidden rounded-lg bg-[#F3F5F4] flex items-center justify-center text-lg">
-                    🍓
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-[#161A18] group-hover:text-[#14804A] dark:text-[#FAFBFA]">
-                      Jus Stroberi Segar
-                    </h3>
-                    <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                      Penjualan turun 15%.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="warning" className="text-[10px] font-semibold">
-                    Volume Turun
-                  </Badge>
-                  <ChevronRight className="h-4 w-4 text-[#98A09B]" />
-                </div>
-              </Link>
-            </div>
-          </div>
-          <div className="pt-3 text-center border-t border-[#E8ECE9] dark:border-[#2B312E]">
-            <Link
-              href="/products"
-              className="text-xs font-semibold text-[#14804A] hover:underline"
-            >
-              Lihat Semua
-            </Link>
-          </div>
+          <div><CardHeader className="p-0 pb-4"><CardTitle>Produk Perlu Diperhatikan</CardTitle></CardHeader>
+            {attentionEntries.length === 0 ? <EmptyState title="Belum ada peringatan margin" description={loadedCosts.length ? "Semua varian dengan HPP memenuhi target bisnisnya." : "Hitung HPP pada detail produk untuk memeriksa margin."} /> : <div className="divide-y divide-[#E8ECE9] dark:divide-[#2B312E]">{attentionEntries.slice(0, 5).map(({ product, variant, cost }) => { const price = parseDecimalToNumber(variant.selling_price); const margin = price > 0 ? ((price - parseDecimalToNumber(cost.fullHpp)) / price) * 100 : 0; return <Link key={variant.id} href={`/products/${product.id}`} className="group flex items-center justify-between gap-3 rounded-xl px-2 py-3 hover:bg-[#FAFBFA] dark:hover:bg-[#1B201D]"><div><h3 className="text-xs font-semibold group-hover:text-[#14804A]">{product.name} · {variant.name}</h3><p className="text-[11px] text-[#737B76]">Margin {formatPercent(margin)} · HPP {formatIDR(cost.fullHpp)}</p></div><div className="flex items-center gap-2"><Badge variant="destructive" className="text-[10px]">Margin rendah</Badge><ChevronRight className="h-4 w-4 text-[#98A09B]" /></div></Link> })}</div>}</div>
+          {attentionEntries.length > 5 && <div className="border-t border-[#E8ECE9] pt-3 text-center dark:border-[#2B312E]"><Link href="/products" className="text-xs font-semibold text-[#14804A] hover:underline">Lihat semua produk</Link></div>}
         </Card>
 
-        {/* Col 2: Komposisi Biaya (Rata-rata) */}
-        <Card className="flex flex-col justify-between">
-          <div>
-            <CardHeader className="p-0 pb-4">
-              <CardTitle>Komposisi Biaya (Rata-rata)</CardTitle>
-            </CardHeader>
-            <DonutChart
-              segments={costBreakdownData}
-              layout="vertical"
-              size={136}
-              centerLabel="Komposisi"
-              centerValue="HPP"
-              totalPercentage="100%"
-            />
-          </div>
-          <div className="pt-3 text-center border-t border-[#E8ECE9] dark:border-[#2B312E]">
-            <span className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-              Berdasarkan 24 resep aktif
-            </span>
-          </div>
-        </Card>
+        <Card className="flex flex-col justify-between"><div><CardHeader className="p-0 pb-4"><CardTitle>Komposisi Biaya (Rata-rata)</CardTitle></CardHeader>{breakdown.length ? <DonutChart segments={breakdown} layout="vertical" size={136} centerLabel="Komponen" centerValue="HPP" totalPercentage="100%" /> : <EmptyState title="Belum ada komposisi biaya" description="Data muncul setelah HPP produk dihitung." />}</div><div className="border-t border-[#E8ECE9] pt-3 text-center text-[11px] text-[#737B76] dark:border-[#2B312E]">{loadedCosts.length} kalkulasi HPP tersedia</div></Card>
 
-        {/* Col 3: Tren HPP Rata-rata */}
-        <Card>
-          <CardHeader className="p-0 pb-2">
-            <CardTitle>Tren HPP Rata-rata</CardTitle>
-          </CardHeader>
-          <TrendChart />
-        </Card>
+        <Card><CardHeader className="p-0 pb-2"><CardTitle>Tren HPP Rata-rata</CardTitle></CardHeader><EmptyState title="Tren periode belum tersedia" description="Backend MVP belum menyediakan agregasi HPP lintas periode." /></Card>
       </section>
 
-      {/* Bottom Insight AI Banner */}
-      <section aria-label="Rekomendasi AI">
-        <Card className="border-[#DDF5E7] bg-[#FAFCFB] dark:border-[#10673C44] dark:bg-[#141A16]">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#DDF5E7] text-[#10673C] dark:bg-[#10673C33] dark:text-[#1EA65E]">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div className="space-y-3">
-              <h2 className="text-sm font-bold text-[#161A18] dark:text-[#FAFBFA]">
-                Insight AI
-              </h2>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#DDF5E7] text-[11px] font-bold text-[#10673C]">
-                    1
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                      Ganti pemasok Gula Aren
-                    </p>
-                    <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                      Bisa hemat Rp 620 / kg (atau 8.7%).
-                    </p>
-                  </div>
-                </div>
-
-                <div className="hidden h-8 w-px bg-[#E8ECE9] sm:block dark:bg-[#2B312E]" />
-
-                <div className="flex items-start gap-2.5">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#DDF5E7] text-[11px] font-bold text-[#10673C]">
-                    2
-                  </span>
-                  <div>
-                    <p className="text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                      Sesuaikan harga Es Kopi Susu Gula Aren
-                    </p>
-                    <p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                      Naikkan harga jual Rp 1.000 – Rp 1.500.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right AI callout mini-card */}
-          <Link
-            href="/ai-assistant"
-            className="flex items-center justify-between gap-4 rounded-xl border border-[#DDF5E7] bg-[#EEF9F2] p-3.5 transition-all hover:bg-[#DDF5E7] dark:border-[#10673C55] dark:bg-[#10673C22]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white p-1.5 text-[#14804A] shadow-2xs dark:bg-[#161A18]">
-                <ArrowUpRight className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-[#10673C] dark:text-[#1EA65E]">
-                  Peluang optimasi terdeteksi
-                </p>
-                <p className="text-[11px] text-[#14804A] dark:text-[#86EFAC]">
-                  AI menemukan 2 peluang untuk meningkatkan margin kamu.
-                </p>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </Card>
-      </section>
+      <section aria-label="Status Integrasi" className="rounded-[18px] border border-[#DDF5E7] bg-[#FAFCFB] p-5 text-xs dark:border-[#10673C44] dark:bg-[#141A16]"><h2 className="font-bold text-[#161A18] dark:text-[#FAFBFA]">Data dashboard tersambung</h2><p className="mt-1 text-[#737B76] dark:text-[#98A09B]">Produk, varian, HPP, dan margin dibaca dari API FastAPI dengan session cookie. Laporan periodik menunggu endpoint agregasi backend.</p><Link href="/products" className="mt-3 inline-flex font-semibold text-[#14804A] hover:underline">Kelola Produk & HPP <ChevronRight className="ml-1 h-4 w-4" /></Link></section>
     </div>
   )
+}
+
+function MetricCard({ label, value, caption, Icon }: { label: string; value: string; caption: string; Icon: LucideIcon }) {
+  return <Card className="flex flex-col justify-between"><div className="flex items-start justify-between"><div><p className="text-xs font-medium text-[#737B76] dark:text-[#98A09B]">{label}</p><p className="mt-1 text-2xl font-bold tracking-tight text-[#161A18] tabular-nums dark:text-[#FAFBFA]">{value}</p><p className="text-[11px] text-[#737B76] dark:text-[#98A09B]">{caption}</p></div><div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]"><Icon className="h-5 w-5" /></div></div></Card>
 }

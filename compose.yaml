@@ -1,0 +1,68 @@
+name: ai-hitung-hpp
+
+services:
+  db:
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hpp}
+      POSTGRES_USER: ${POSTGRES_USER:-hpp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.12-slim}
+    restart: unless-stopped
+    environment:
+      HPP_ENVIRONMENT: ${HPP_ENVIRONMENT:-development}
+      HPP_DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-hpp_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-hpp}"
+      HPP_DATABASE_COMMAND_TIMEOUT_SECONDS: ${HPP_DATABASE_COMMAND_TIMEOUT_SECONDS:-10}
+      HPP_SECRET_KEY: ${HPP_SECRET_KEY:?Set HPP_SECRET_KEY in .env}
+      HPP_API_V1_PREFIX: /api/v1
+      HPP_SESSION_COOKIE_NAME: hpp_session
+      HPP_SESSION_COOKIE_SECURE: "false"
+      HPP_SESSION_COOKIE_HTTPONLY: "true"
+      HPP_SESSION_COOKIE_SAMESITE: lax
+      HPP_SESSION_COOKIE_MAX_AGE_SECONDS: 604800
+      HPP_PASSWORD_RESET_TOKEN_MAX_AGE_SECONDS: 3600
+      HPP_CORS_ALLOWED_ORIGINS: '${HPP_CORS_ALLOWED_ORIGINS:-["http://localhost:3000"]}'
+      HPP_CORS_ALLOW_CREDENTIALS: "true"
+      HPP_CURRENCY: IDR
+      HPP_RATE_LIMIT_BACKEND: memory
+      HPP_RATE_LIMIT_WINDOW_SECONDS: 60
+      HPP_RATE_LIMIT_REQUESTS: 60
+      HPP_RATE_LIMIT_LOGIN_REQUESTS: 5
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-ai-hitung-hpp-postgres-data}

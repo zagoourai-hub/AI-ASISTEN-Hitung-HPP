@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.business import Business, BusinessPricingSetting
 from app.repositories.tenant import business_scope_clause
@@ -16,10 +17,12 @@ class BusinessRepository:
         owner_id: UUID,
     ) -> Business | None:
         result = await session.execute(
-            select(Business).where(
+            select(Business)
+            .where(
                 business_scope_clause(Business.id, business_id),
                 Business.owner_id == owner_id,
             )
+            .options(selectinload(Business.pricing_setting))
         )
         return result.scalar_one_or_none()
 

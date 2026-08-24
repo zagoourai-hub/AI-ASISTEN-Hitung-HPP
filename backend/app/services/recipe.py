@@ -66,6 +66,7 @@ class RecipeService:
                     status=RecipeStatus.DRAFT,
                     change_reason=payload.change_reason,
                 )
+                recipe_version.items = []
                 self.repository.add_version(self.session, recipe_version)
                 await self.session.flush()
                 items = await self._build_items(
@@ -79,7 +80,14 @@ class RecipeService:
                 await self.session.flush()
         except IntegrityError as error:
             raise self._conflict() from error
-        return recipe_version
+        created = await self.repository.find_version(
+            self.session,
+            business_id=business_id,
+            recipe_version_id=recipe_version.id,
+        )
+        if created is None:
+            raise self._not_found("Recipe version")
+        return created
 
     async def update_draft(
         self,

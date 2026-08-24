@@ -26,6 +26,7 @@ export const metadata: Metadata = {
 }
 
 import { AppShell } from "@/components/app-shell"
+import { QueryProvider } from "@/components/query-provider"
 
 export default function RootLayout({
   children,
@@ -54,7 +55,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-[#F8FAF9] text-[#161A18] font-sans dark:bg-[#111315] dark:text-[#FAFBFA]">
-        <AppShell>{children}</AppShell>
+        <QueryProvider>
+          <AppShell>{children}</AppShell>
+        </QueryProvider>
       </body>
     </html>
   )

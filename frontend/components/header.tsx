@@ -58,10 +58,10 @@ export function Header({
             </div>
             <div className="hidden flex-col text-left md:flex">
               <span className="text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                Sarah Wijaya
+                Workspace Bisnis
               </span>
               <span className="text-[10px] text-[#737B76] dark:text-[#98A09B]">
-                Pemilik Usaha
+                Pemilik Bisnis
               </span>
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-[#737B76]" />

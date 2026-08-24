@@ -13,6 +13,27 @@ minimum 32-character secret, and applies
 `HPP_DATABASE_COMMAND_TIMEOUT_SECONDS` (default `10`). Never put credentials
 in this document, the repository, logs, or an OpenAPI response.
 
+## Local Docker Compose
+
+The project Compose setup runs PostgreSQL and the FastAPI backend. The backend
+waits for a healthy database, applies `alembic upgrade head`, then starts
+Uvicorn on `http://localhost:8000`.
+
+```bash
+cp docker.env.example .env
+# Replace POSTGRES_PASSWORD and HPP_SECRET_KEY with local-only values.
+docker compose up -d --build --wait
+curl --fail http://localhost:8000/api/v1/health
+```
+
+Stop the services without deleting the database volume:
+
+```bash
+docker compose down
+```
+
+Do not add `-v` unless deleting the local PostgreSQL data is intentional.
+
 ## Migration
 
 Run from `backend/` after taking a backup and confirming the target release:

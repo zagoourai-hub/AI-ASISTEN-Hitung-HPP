@@ -1,215 +1,27 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { Plus, Search, Filter, ChevronRight } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { ChevronRight, Plus, Search } from "lucide-react"
+import { listProducts } from "@/lib/api/catalog"
+import { ApiError } from "@/lib/api/client"
+import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
+import { formatIDR, formatPercent, parseDecimalToNumber } from "@/lib/format"
 import { Header } from "@/components/header"
-import { Card } from "@/components/ui/card"
+import { ProductModal } from "@/components/products/product-modal"
+import { EmptyState, ErrorBanner, LoadingSpinner } from "@/components/feedback/feedback-states"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { EmptyState } from "@/components/feedback/feedback-states"
-import { formatIDR } from "@/lib/utils"
-
-interface ProductItem {
-  id: string
-  name: string
-  category: string
-  sku: string
-  hpp: number
-  price: number
-  margin: number
-  status: "Aktif" | "Draft" | "Arsip"
-  icon: string
-}
-
-const PRODUCTS: ProductItem[] = [
-  {
-    id: "1",
-    name: "Es Kopi Susu Gula Aren - Medium",
-    category: "Minuman",
-    sku: "EKSGA-MED",
-    hpp: 6380,
-    price: 18000,
-    margin: 64.6,
-    status: "Aktif",
-    icon: "🧋",
-  },
-  {
-    id: "2",
-    name: "Mie Ayam Spesial",
-    category: "Makanan",
-    sku: "MIE-SPS",
-    hpp: 11200,
-    price: 22000,
-    margin: 49.1,
-    status: "Aktif",
-    icon: "🍜",
-  },
-  {
-    id: "3",
-    name: "Jus Stroberi Segar",
-    category: "Minuman",
-    sku: "JUS-STR",
-    hpp: 7500,
-    price: 15000,
-    margin: 50.0,
-    status: "Aktif",
-    icon: "🍓",
-  },
-  {
-    id: "4",
-    name: "Croissant Butter",
-    category: "Pastry",
-    sku: "CRS-BTR",
-    hpp: 9800,
-    price: 24000,
-    margin: 59.2,
-    status: "Aktif",
-    icon: "🥐",
-  },
-]
-
-import { ProductModal } from "@/components/products/product-modal"
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const query = useQuery({ queryKey: ["products"], queryFn: ({ signal }) => listProducts(signal) })
+  const error = query.error instanceof ApiError ? query.error : null
+  const products = (query.data?.data ?? []).filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()) || (product.category?.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()))
 
-  const filtered = PRODUCTS.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  return (
-    <div className="space-y-6 pb-12">
-      <Header
-        title="Daftar Produk"
-        subtitle="Kelola katalog produk, resep, dan penetapan HPP produk aktif."
-      />
-
-      <ProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {}}
-      />
-
-      {/* Actions & Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 items-center gap-3 max-w-md">
-          <Input
-            placeholder="Cari produk atau SKU..."
-            prefixNode={<Search className="h-4 w-4" />}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2">
-            <Filter className="h-4 w-4 text-[#737B76]" />
-            Filter
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setIsModalOpen(true)}
-            className="gap-2 bg-[#14804A] hover:bg-[#10673C]"
-          >
-            <Plus className="h-4 w-4" />
-            Tambah Produk
-          </Button>
-        </div>
-      </div>
-
-      {/* Products Table Card */}
-      <Card>
-        {filtered.length === 0 ? (
-          <div className="py-8">
-            <EmptyState
-              title="Produk Tidak Ditemukan"
-              description={`Tidak ada produk yang cocok dengan pencarian "${searchTerm}".`}
-              action={
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSearchTerm("")}
-                  className="text-xs"
-                >
-                  Reset Pencarian
-                </Button>
-              }
-            />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-[#E8ECE9] text-[#737B76] dark:border-[#2B312E] dark:text-[#98A09B]">
-                <th className="pb-3 pl-2 font-medium">Produk</th>
-                <th className="pb-3 font-medium">Kategori</th>
-                <th className="pb-3 font-medium">SKU</th>
-                <th className="pb-3 text-right font-medium">HPP</th>
-                <th className="pb-3 text-right font-medium">Harga Jual</th>
-                <th className="pb-3 text-right font-medium">Margin</th>
-                <th className="pb-3 font-medium text-center">Status</th>
-                <th className="pb-3 pr-2 text-right font-medium">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E8ECE9] dark:divide-[#2B312E]">
-              {filtered.map((prod) => (
-                <tr
-                  key={prod.id}
-                  className="hover:bg-[#FAFBFA] transition-colors dark:hover:bg-[#1B201D]"
-                >
-                  <td className="py-3.5 pl-2 font-medium text-[#161A18] dark:text-[#FAFBFA]">
-                    <Link
-                      href={`/products/${prod.id}`}
-                      className="flex items-center gap-3 group"
-                    >
-                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F3F5F4] text-lg">
-                        {prod.icon}
-                      </span>
-                      <span className="font-semibold group-hover:text-[#14804A] transition-colors">
-                        {prod.name}
-                      </span>
-                    </Link>
-                  </td>
-                  <td className="py-3.5 text-[#737B76] dark:text-[#98A09B]">
-                    {prod.category}
-                  </td>
-                  <td className="py-3.5 font-mono text-[11px] text-[#737B76] dark:text-[#98A09B]">
-                    {prod.sku}
-                  </td>
-                  <td className="py-3.5 text-right font-medium tabular-nums text-[#161A18] dark:text-[#FAFBFA]">
-                    {formatIDR(prod.hpp)}
-                  </td>
-                  <td className="py-3.5 text-right font-semibold tabular-nums text-[#161A18] dark:text-[#FAFBFA]">
-                    {formatIDR(prod.price)}
-                  </td>
-                  <td className="py-3.5 text-right font-bold tabular-nums text-[#14804A] dark:text-[#1EA65E]">
-                    {prod.margin}%
-                  </td>
-                  <td className="py-3.5 text-center">
-                    <Badge variant="success" className="text-[10px]">
-                      {prod.status}
-                    </Badge>
-                  </td>
-                  <td className="py-3.5 pr-2 text-right">
-                    <Link
-                      href={`/products/${prod.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#14804A] hover:underline"
-                    >
-                      Detail
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        )}
-      </Card>
-    </div>
-  )
+  return <div className="space-y-6 pb-12"><Header title="Daftar Produk" subtitle="Kelola katalog produk, resep, dan penetapan HPP produk aktif." /><ProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSuccess={() => setIsModalOpen(false)} /><div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex max-w-md flex-1 items-center gap-3"><Input placeholder="Cari produk atau kategori..." prefixNode={<Search className="h-4 w-4" />} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} /></div><Button size="sm" onClick={() => setIsModalOpen(true)} className="gap-2 bg-[#14804A] hover:bg-[#10673C]"><Plus className="h-4 w-4" />Tambah Produk</Button></div>{query.isPending ? <LoadingSpinner label="Memuat produk..." /> : error ? <ErrorBanner code={error.code} message={mapSemanticErrorToMessage(error.code, error.message)} onRetry={() => query.refetch()} /> : <Card>{products.length === 0 ? <div className="py-8"><EmptyState title={searchTerm ? "Produk Tidak Ditemukan" : "Belum Ada Produk"} description={searchTerm ? `Tidak ada produk yang cocok dengan pencarian "${searchTerm}".` : "Tambahkan produk pertama untuk mulai mengelola resep dan HPP."} action={searchTerm ? <Button size="sm" variant="outline" onClick={() => setSearchTerm("")}>Reset Pencarian</Button> : undefined} /></div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b border-[#E8ECE9] text-[#737B76] dark:border-[#2B312E] dark:text-[#98A09B]"><th className="pb-3 pl-2 font-medium">Produk</th><th className="pb-3 font-medium">Kategori</th><th className="pb-3 text-right font-medium">Varian</th><th className="pb-3 text-right font-medium">Harga Jual</th><th className="pb-3 text-right font-medium">Margin Target</th><th className="pb-3 text-center font-medium">Status</th><th className="pb-3 pr-2 text-right font-medium">Aksi</th></tr></thead><tbody className="divide-y divide-[#E8ECE9] dark:divide-[#2B312E]">{products.map((product) => { const variant = product.variants[0]; const target = parseDecimalToNumber(variant?.target_margin_override ?? product.category?.target_margin) * 100; return <tr key={product.id} className="hover:bg-[#FAFBFA] dark:hover:bg-[#1B201D]"><td className="py-3.5 pl-2 font-semibold text-[#161A18] dark:text-[#FAFBFA]"><Link href={`/products/${product.id}`} className="flex items-center gap-3 hover:text-[#14804A]"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F3F5F4] text-lg">●</span>{product.name}</Link></td><td className="py-3.5 text-[#737B76]">{product.category?.name ?? "-"}</td><td className="py-3.5 text-right text-[#737B76]">{product.variants.length}</td><td className="py-3.5 text-right font-semibold tabular-nums">{formatIDR(variant?.selling_price)}</td><td className="py-3.5 text-right font-bold tabular-nums text-[#14804A]">{formatPercent(target)}</td><td className="py-3.5 text-center"><Badge variant={product.status === "ACTIVE" ? "success" : "outline"} className="text-[10px]">{product.status === "ACTIVE" ? "Aktif" : "Arsip"}</Badge></td><td className="py-3.5 pr-2 text-right"><Link href={`/products/${product.id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-[#14804A] hover:underline">Detail<ChevronRight className="h-3.5 w-3.5" /></Link></td></tr> })}</tbody></table></div>}</Card>}</div>
 }

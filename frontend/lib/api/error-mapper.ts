@@ -19,6 +19,8 @@ export function mapSemanticErrorToMessage(
       return "Target margin tidak valid. Target margin harus berada pada rentang 0% hingga 99.9%."
     case "CALCULATION_CONFLICT":
       return "Terjadi konflik perhitungan HPP. Silakan refresh halaman dan hitung ulang."
+    case "RATE_LIMITED":
+      return "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
     case "VALIDATION_ERROR":
       return "Data yang dimasukkan tidak valid. Periksa kembali form input Anda."
     case "UNAUTHENTICATED":

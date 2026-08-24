@@ -183,6 +183,7 @@ class ProductService:
                     status=ProductStatus.ACTIVE,
                     category=category,
                 )
+                product.variants = []
                 self.repository.add_product(self.session, product)
                 await self.session.flush()
 
@@ -198,7 +199,15 @@ class ProductService:
                 await self.session.flush()
         except IntegrityError as error:
             raise self._duplicate("Product") from error
-        return product
+        created = await self.repository.find_product(
+            self.session,
+            business_id=business_id,
+            product_id=product.id,
+            include_archived=False,
+        )
+        if created is None:
+            raise self._not_found("Product")
+        return created
 
     async def update_product(
         self,

@@ -104,7 +104,14 @@ class IngredientService:
                     await self.session.flush()
         except IntegrityError as error:
             raise self._duplicate() from error
-        return ingredient
+        created = await self.repository.find_by_id(
+            self.session,
+            business_id=business_id,
+            ingredient_id=ingredient.id,
+        )
+        if created is None:
+            raise self._not_found()
+        return created
 
     async def update(
         self,
