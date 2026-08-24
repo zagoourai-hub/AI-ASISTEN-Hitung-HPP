@@ -6,22 +6,32 @@ import { usePathname } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { MobileNav } from "@/components/mobile-nav"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { cn } from "@/lib/utils"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const isAuthPage =
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/reset-password")
+  const isLandingPage = pathname === "/landing"
 
   if (isAuthPage) {
     return <main className="min-h-[100dvh]">{children}</main>
   }
 
+  if (isLandingPage) {
+    return <div className="min-h-[100dvh]">{children}</div>
+  }
+
   return (
     <div className="flex min-h-[100dvh] flex-col lg:flex-row bg-[#F8FAF9] dark:bg-[#111315]">
       {/* Desktop Sidebar (1024px+) */}
-      <Sidebar />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen((open) => !open)}
+      />
 
       {/* Mobile Top App Bar (<1024px for Android / Samsung) */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[#E8ECE9] bg-white/95 px-4 backdrop-blur-md dark:border-[#2B312E] dark:bg-[#161A18]/95 lg:hidden shadow-2xs">
@@ -51,7 +61,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content Area with Responsive Padding & Safe Area */}
-      <main className="flex-1 pl-0 lg:pl-64 transition-all duration-200 min-w-0">
+      <main
+        className={cn(
+          "min-w-0 flex-1 pl-0 transition-[padding-left] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          isSidebarOpen ? "lg:pl-64" : "lg:pl-20"
+        )}
+      >
         <div className="mx-auto max-w-7xl px-3.5 py-4 sm:px-6 sm:py-6 lg:px-8 pb-24 lg:pb-8">
           {children}
         </div>

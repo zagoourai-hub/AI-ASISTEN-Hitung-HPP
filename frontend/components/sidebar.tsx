@@ -12,9 +12,12 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
+import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -26,26 +29,91 @@ export const NAV_ITEMS = [
   { label: "Pengaturan", href: "/settings/business", icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onToggle: () => void
+}
+
+export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const shouldReduceMotion = useReducedMotion()
+  const labelTransition = { duration: shouldReduceMotion ? 0 : 0.18 }
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col justify-between border-r border-[#E8ECE9] bg-white px-4 py-6 lg:flex dark:border-[#2B312E] dark:bg-[#161A18]">
+    <motion.aside
+      id="desktop-sidebar"
+      layout
+      initial={false}
+      transition={{
+        layout: {
+          duration: shouldReduceMotion ? 0 : 0.3,
+          ease: [0.22, 1, 0.36, 1],
+        },
+      }}
+      className={cn(
+        "fixed inset-y-0 left-0 z-30 hidden flex-col justify-between overflow-hidden border-r border-[#E8ECE9] bg-white py-6 lg:flex dark:border-[#2B312E] dark:bg-[#161A18]",
+        isOpen ? "w-64 px-4" : "w-20 px-3"
+      )}
+    >
       {/* Brand Logo */}
       <div className="space-y-6">
-        <Link href="/" className="flex items-center gap-3 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]">
-            {/* 3-bar logo mark */}
-            <div className="flex items-end gap-1">
-              <span className="h-3 w-1 rounded-full bg-[#14804A]" />
-              <span className="h-5 w-1 rounded-full bg-[#14804A]" />
-              <span className="h-4 w-1 rounded-full bg-[#14804A]" />
+        <div
+          className={cn(
+            "flex",
+            isOpen ? "items-center justify-between" : "flex-col items-center gap-3"
+          )}
+        >
+          <Link
+            href="/"
+            aria-label="HPP Pintar"
+            className={cn(
+              "flex min-w-0 items-center",
+              isOpen ? "gap-3 px-2" : "justify-center"
+            )}
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#1EA65E]">
+              {/* 3-bar logo mark */}
+              <div className="flex items-end gap-1">
+                <span className="h-3 w-1 rounded-full bg-[#14804A]" />
+                <span className="h-5 w-1 rounded-full bg-[#14804A]" />
+                <span className="h-4 w-1 rounded-full bg-[#14804A]" />
+              </div>
             </div>
-          </div>
-          <span className="text-lg font-bold tracking-tight text-[#161A18] dark:text-[#FAFBFA]">
-            HPP Pintar
-          </span>
-        </Link>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.span
+                  key="brand-label"
+                  initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={labelTransition}
+                  className="whitespace-nowrap text-lg font-bold tracking-tight text-[#161A18] dark:text-[#FAFBFA]"
+                >
+                  HPP Pintar
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+
+          <motion.button
+            type="button"
+            whileHover={shouldReduceMotion ? undefined : { scale: 1.04 }}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.94 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.16 }}
+            onClick={onToggle}
+            aria-controls="desktop-sidebar"
+            aria-expanded={isOpen}
+            aria-label={isOpen ? "Tutup sidebar" : "Buka sidebar"}
+            title={isOpen ? "Tutup sidebar" : "Buka sidebar"}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#737B76] outline-none transition-colors hover:bg-[#F3F5F4] hover:text-[#161A18] focus-visible:ring-2 focus-visible:ring-[#14804A] focus-visible:ring-offset-2 dark:text-[#98A09B] dark:hover:bg-[#232826] dark:hover:text-[#FAFBFA] dark:focus-visible:ring-offset-[#161A18]"
+          >
+            {isOpen ? (
+              <PanelLeftClose className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
+            )}
+          </motion.button>
+        </div>
 
         {/* Navigation items */}
         <nav className="space-y-1">
@@ -60,9 +128,12 @@ export function Sidebar() {
             return (
               <Link
                 key={item.href}
+                aria-label={isOpen ? undefined : item.label}
+                title={isOpen ? undefined : item.label}
                 href={item.href}
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150",
+                  "group flex items-center overflow-hidden rounded-xl py-2.5 text-sm font-medium transition-all duration-150",
+                  isOpen ? "gap-3 px-3" : "justify-center px-2",
                   isActive
                     ? "bg-[#EEF9F2] text-[#14804A] font-semibold dark:bg-[#10673C33] dark:text-[#1EA65E]"
                     : "text-[#5F6762] hover:bg-[#F3F5F4] hover:text-[#161A18] dark:text-[#98A09B] dark:hover:bg-[#232826] dark:hover:text-[#FAFBFA]"
@@ -70,13 +141,26 @@ export function Sidebar() {
               >
                 <Icon
                   className={cn(
-                    "h-5 w-5 transition-colors",
+                    "h-5 w-5 shrink-0 transition-colors",
                     isActive
                       ? "text-[#14804A] dark:text-[#1EA65E]"
                       : "text-[#737B76] group-hover:text-[#161A18] dark:text-[#98A09B] dark:group-hover:text-[#FAFBFA]"
                   )}
                 />
-                <span>{item.label}</span>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.span
+                      key={`${item.href}-label`}
+                      initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -8 }}
+                      transition={labelTransition}
+                      className="whitespace-nowrap"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </Link>
             )
           })}
@@ -85,30 +169,70 @@ export function Sidebar() {
 
       {/* Bottom Profile / Plan Badge & Theme Toggle */}
       <div className="space-y-3 border-t border-[#E8ECE9] pt-4 dark:border-[#2B312E]">
-        <div className="flex items-center justify-between px-1">
-          <span className="text-[11px] font-medium text-[#737B76] dark:text-[#98A09B]">
-            Tema Tampilan
-          </span>
+        <div
+          className={cn(
+            "flex items-center px-1",
+            isOpen ? "justify-between" : "justify-center"
+          )}
+        >
+          <AnimatePresence initial={false}>
+            {isOpen && (
+              <motion.span
+                key="theme-label"
+                initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={labelTransition}
+                className="whitespace-nowrap text-[11px] font-medium text-[#737B76] dark:text-[#98A09B]"
+              >
+                Tema Tampilan
+              </motion.span>
+            )}
+          </AnimatePresence>
           <ThemeToggle className="h-8 w-8 rounded-lg" />
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-[#E8ECE9] bg-[#FAFBFA] p-3 dark:border-[#2B312E] dark:bg-[#111315]">
+        <div
+          className={cn(
+            "flex items-center rounded-xl border border-[#E8ECE9] bg-[#FAFBFA] dark:border-[#2B312E] dark:bg-[#111315]",
+            isOpen ? "justify-between p-3" : "justify-center p-2"
+          )}
+        >
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#10673C] font-semibold text-white">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#10673C] font-semibold text-white">
               R
             </div>
-            <div className="flex flex-col text-left">
-              <span className="text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                Founder Space
-              </span>
-              <span className="text-[11px] font-medium text-[#14804A] dark:text-[#1EA65E]">
-                Pro Plan
-              </span>
-            </div>
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  key="profile-details"
+                  initial={shouldReduceMotion ? false : { opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={labelTransition}
+                  className="flex min-w-0 flex-col text-left"
+                >
+                  <span className="whitespace-nowrap text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
+                    Founder Space
+                  </span>
+                  <span className="whitespace-nowrap text-[11px] font-medium text-[#14804A] dark:text-[#1EA65E]">
+                    Pro Plan
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-          <ChevronDown className="h-4 w-4 text-[#737B76]" />
+          {isOpen && (
+            <motion.div
+              initial={shouldReduceMotion ? false : { opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={labelTransition}
+            >
+              <ChevronDown className="h-4 w-4 text-[#737B76]" aria-hidden="true" />
+            </motion.div>
+          )}
         </div>
       </div>
-    </aside>
+    </motion.aside>
   )
 }
