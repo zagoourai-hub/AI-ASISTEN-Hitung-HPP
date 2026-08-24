@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },

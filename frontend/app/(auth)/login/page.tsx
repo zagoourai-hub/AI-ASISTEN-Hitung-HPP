@@ -11,6 +11,7 @@ import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ErrorBanner } from "@/components/feedback/feedback-states"
+import { useToast } from "@/components/feedback/toast-provider"
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, Sparkles } from "lucide-react"
 
 interface LoginFormValues {
@@ -21,13 +22,23 @@ interface LoginFormValues {
 export default function LoginPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const form = useForm<LoginFormValues>({ defaultValues: { email: "", password: "" } })
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: (session) => {
       queryClient.setQueryData(["auth", "me"], session)
+      toast({ variant: "success", title: "Login berhasil", description: "Selamat datang kembali di HPP Pintar." })
       router.replace("/")
+    },
+    onError: (requestError: unknown) => {
+      const apiError = requestError instanceof ApiError ? requestError : null
+      toast({
+        variant: "error",
+        title: "Login gagal",
+        description: apiError ? mapSemanticErrorToMessage(apiError.code, apiError.message) : "Periksa koneksi backend lalu coba lagi.",
+      })
     },
   })
   const error = mutation.error instanceof ApiError ? mutation.error : null

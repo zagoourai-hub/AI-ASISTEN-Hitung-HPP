@@ -9,7 +9,7 @@ import { Header } from "@/components/header"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DonutChart, type DonutSegment } from "@/components/charts/donut-chart"
-import { EmptyState, ErrorBanner, LoadingSpinner } from "@/components/feedback/feedback-states"
+import { DashboardSkeleton, EmptyState, ErrorBanner } from "@/components/feedback/feedback-states"
 import { getBusiness } from "@/lib/api/business"
 import { listProducts } from "@/lib/api/catalog"
 import { getVariantHppHistory } from "@/lib/api/hpp"
@@ -83,7 +83,7 @@ export default function DashboardPage() {
   }, [loadedCosts])
 
   const queryError = productsQuery.error instanceof ApiError ? productsQuery.error : businessQuery.error instanceof ApiError ? businessQuery.error : null
-  if (productsQuery.isPending || businessQuery.isPending) return <LoadingSpinner label="Memuat dashboard..." />
+  if (productsQuery.isPending || businessQuery.isPending) return <DashboardSkeleton />
   if (queryError) return <ErrorBanner code={queryError.code} message={mapSemanticErrorToMessage(queryError.code, queryError.message)} onRetry={() => { productsQuery.refetch(); businessQuery.refetch() }} />
 
   const isMarginBelowTarget = loadedCosts.length > 0 && metrics.averageMargin < targetMargin

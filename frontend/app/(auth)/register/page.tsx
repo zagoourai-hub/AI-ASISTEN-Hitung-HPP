@@ -11,6 +11,7 @@ import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ErrorBanner } from "@/components/feedback/feedback-states"
+import { useToast } from "@/components/feedback/toast-provider"
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail, Sparkles, Store } from "lucide-react"
 
 interface RegisterFormValues extends RegisterPayload {
@@ -20,6 +21,7 @@ interface RegisterFormValues extends RegisterPayload {
 export default function RegisterPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const form = useForm<RegisterFormValues>({
     defaultValues: { email: "", password: "", confirmPassword: "", business_name: "", business_type: "Kuliner", timezone: "Asia/Jakarta", default_target_margin: "0.3000" },
@@ -37,7 +39,16 @@ export default function RegisterPage() {
     },
     onSuccess: (session) => {
       queryClient.setQueryData(["auth", "me"], session)
+      toast({ variant: "success", title: "Registrasi berhasil", description: "Bisnis kamu siap dikelola di HPP Pintar." })
       router.replace("/")
+    },
+    onError: (requestError: unknown) => {
+      const apiError = requestError instanceof ApiError ? requestError : null
+      toast({
+        variant: "error",
+        title: "Registrasi gagal",
+        description: apiError ? mapSemanticErrorToMessage(apiError.code, apiError.message) : "Periksa koneksi backend lalu coba lagi.",
+      })
     },
   })
   const error = mutation.error instanceof ApiError ? mutation.error : null

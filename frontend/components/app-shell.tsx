@@ -9,13 +9,15 @@ import { ApiError } from "@/lib/api/client"
 import { Sidebar } from "@/components/sidebar"
 import { MobileNav } from "@/components/mobile-nav"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
-import { ErrorBanner, LoadingSpinner } from "@/components/feedback/feedback-states"
+import { ErrorBanner, PageSkeleton } from "@/components/feedback/feedback-states"
+import { useToast } from "@/components/feedback/toast-provider"
 import { cn } from "@/lib/utils"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const isAuthPage =
     pathname.startsWith("/login") ||
@@ -31,9 +33,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: async () => {
+      toast({ variant: "success", title: "Berhasil keluar", description: "Sesi akun sudah diakhiri." })
       queryClient.clear()
       router.replace("/login")
     },
+    onError: () => toast({ variant: "error", title: "Gagal keluar", description: "Sesi belum dapat diakhiri. Coba lagi." }),
   })
 
   React.useEffect(() => {
@@ -52,7 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   if (sessionQuery.isPending) {
-    return <main className="min-h-[100dvh]"><LoadingSpinner label="Memuat sesi akun..." /></main>
+    return <PageSkeleton label="Memuat sesi akun..." />
   }
 
   if (sessionQuery.error) {

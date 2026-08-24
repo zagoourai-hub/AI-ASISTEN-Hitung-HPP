@@ -15,11 +15,11 @@ Last Updated: 2026-08-25
 
 ## Summary
 
-- Total: 56
-- Frontend: 20 (20 completed, 0 pending)
+- Total: 57
+- Frontend: 21 (21 completed, 0 pending)
 - Backend: 31 (31 completed, 0 pending)
 - Integration: 5 (5 completed, 0 in progress, 0 pending, 0 blocked)
-- Completed: 56
+- Completed: 57
 - In Progress: 0
 - Pending: 0
 - Blocked: 0
@@ -39,6 +39,15 @@ Last Updated: 2026-08-25
 - Live smoke menemukan dan memperbaiki tiga response-path `MissingGreenlet` pada ingredient/product/recipe creation serta action bar HPP mobile yang tertutup bottom navigation.
 - Browser flow register -> session -> settings -> logout -> login -> ingredient -> product -> draft recipe -> activate -> HPP -> pricing recommendation -> discount simulation lulus pada desktop dan mobile; current tab console error 0 dan request API MVP expected 2xx.
 - Dependency install audited `SAFE_NO_KNOWN_IOC`; package lifecycle scripts tidak dijalankan.
+
+## UI Feedback Checkpoint — 2026-08-25
+
+- `FE-P4-T004` completed: global Radix Toast untuk login/register/logout success/error, satu toast aktif, posisi atas-tengah desktop/mobile, dan close button keyboard/touch accessible.
+- `FE-P4-T004` completed: `PageSkeleton` untuk session dan `DashboardSkeleton` untuk query produk/bisnis memakai state `isPending` nyata; tidak ada `setTimeout`, `setInterval`, atau artificial loading delay; reduced-motion tetap didukung.
+- Verification: `npm run lint` passed; `npx tsc --noEmit` passed; `npm run build` passed; Playwright register `201`, login `200`, invalid login error toast, desktop/mobile screenshots, dan successful-flow console error `0`.
+- Evidence: `screenshots/register-toast-desktop.png`, `screenshots/login-toast-top-center-390x844.png`, dan screenshot live auth sebelumnya tetap berada di `screenshots/`.
+- Note: beberapa GET sempat `ERR_ABORTED` saat route transition dan retry berikutnya `200`; tidak ada kegagalan final API pada flow sukses.
+- Resume target 2026-08-26: tunggu daftar UI/product update berikutnya dari user, pecah menjadi task atomic baru sebelum implementasi.
 
 ## Phase Gates
 
@@ -76,6 +85,7 @@ Stack: Next.js App Router + TypeScript strict
 | FE-P4-T001 | Phase 4 | FE | completed | Audit seluruh MVP flow untuk loading, empty, error, success, disabled, hover, focus, responsive, dan reduced motion | FE-P1-T001, FE-P2-T004, FE-P3-T005 | Verified on all routes; prefers-reduced-motion in globals.css; 0 console errors on navigation | All 9 state primitives verified |
 | FE-P4-T002 | Phase 4 | FE | completed | Buat Playwright E2E flow register/login → ingredient → product → recipe → HPP → pricing | FE-P4-T001, BE-P4-T001 | 11 desktop & mobile screenshots captured in `screenshots/`; E2E spec in `frontend/tests/e2e-pilot-flow.spec.ts` | Proof in `screenshots/` |
 | FE-P4-T003 | Phase 4 | FE | completed | Jalankan frontend typecheck, lint, build, dan perbaiki issue yang ditemukan | FE-P4-T002 | `npx tsc --noEmit` 0 errors, `npm run lint` 0 errors/warnings, `npm run build` 13/13 routes passed | Frontend MVP 100% complete; handoff frontend agent diterima |
+| FE-P4-T004 | Phase 4 | FE | completed | Tambahkan global action feedback dan real query-driven loading states untuk auth/session/dashboard | FE-P4-T001, FE-P4-T003, INT-P1-T003 | `npm run lint`, `npx tsc --noEmit`, `npm run build`, dan Playwright auth desktop/mobile passed; success/error toast dan `isPending` skeleton verified; no artificial loading delay | Toast top-center memakai existing Radix UI; evidence disimpan di `screenshots/`; next UI updates menunggu prioritas user |
 
 ## [BE] Backend Tasks
 
