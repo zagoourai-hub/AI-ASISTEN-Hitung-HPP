@@ -12,6 +12,9 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
@@ -27,7 +30,23 @@ export const NAV_ITEMS = [
   { label: "Pengaturan", href: "/settings/business", icon: Settings },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onToggle: () => void
+  businessName?: string
+  email?: string
+  onLogout: () => void
+  isLoggingOut?: boolean
+}
+
+export function Sidebar({
+  isOpen,
+  onToggle,
+  businessName = "Bisnis",
+  email = "",
+  onLogout,
+  isLoggingOut = false,
+}: SidebarProps) {
   const pathname = usePathname()
   const shouldReduceMotion = useReducedMotion()
   const labelTransition = { duration: shouldReduceMotion ? 0 : 0.18 }
@@ -193,14 +212,14 @@ export function Sidebar() {
         >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#10673C] font-semibold text-white">
-              R
+              {businessName.slice(0, 1).toUpperCase()}
             </div>
             <div className="flex flex-col text-left">
               <span className="text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-                Founder Space
+                {businessName}
               </span>
               <span className="text-[11px] font-medium text-[#14804A] dark:text-[#1EA65E]">
-                Pro Plan
+                {email || "Akun pemilik"}
               </span>
             </div>
           </div>

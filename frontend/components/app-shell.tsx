@@ -10,20 +10,23 @@ import { Sidebar } from "@/components/sidebar"
 import { MobileNav } from "@/components/mobile-nav"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { ErrorBanner, LoadingSpinner } from "@/components/feedback/feedback-states"
+import { cn } from "@/lib/utils"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
   const isAuthPage =
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/reset-password")
+  const isLandingPage = pathname === "/landing"
 
   const sessionQuery = useQuery({
     queryKey: ["auth", "me"],
     queryFn: ({ signal }: { signal: AbortSignal }) => getCurrentSession(signal),
-    enabled: !isAuthPage,
+    enabled: !isAuthPage && !isLandingPage,
   })
   const logoutMutation = useMutation({
     mutationFn: logout,
@@ -44,6 +47,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return <main className="min-h-[100dvh]">{children}</main>
   }
 
+  if (isLandingPage) {
+    return <div className="min-h-[100dvh]">{children}</div>
+  }
+
   if (sessionQuery.isPending) {
     return <main className="min-h-[100dvh]"><LoadingSpinner label="Memuat sesi akun..." /></main>
   }
@@ -60,6 +67,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-[100dvh] flex-col lg:flex-row bg-[#F8FAF9] dark:bg-[#111315]">
       {/* Desktop Sidebar (1024px+) */}
       <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen((open) => !open)}
         businessName={sessionQuery.data?.business.name}
         email={sessionQuery.data?.user.email}
         onLogout={() => logoutMutation.mutate()}
