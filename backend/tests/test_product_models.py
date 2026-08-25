@@ -60,6 +60,15 @@ def test_product_has_active_status_and_nullable_category() -> None:
         "CASCADE",
         "SET NULL",
     }
+    assert products.c.image_key.nullable is True
+    assert products.c.image_media_type.nullable is True
+    assert products.c.image_size_bytes.nullable is True
+    checks = {
+        constraint.name
+        for constraint in products.constraints
+        if isinstance(constraint, CheckConstraint)
+    }
+    assert "ck_products_product_image_metadata_consistency" in checks
 
 
 def test_product_variant_enforces_cost_and_margin_invariants() -> None:
@@ -97,6 +106,7 @@ def test_product_migration_is_registered_after_ingredient_migration() -> None:
     revisions = list(scripts.walk_revisions("base", "heads"))
 
     assert [revision.revision for revision in revisions] == [
+        "0012_product_images",
         "0011_audit_logs",
         "0010_recommendation_drafts",
         "0009_cost_versions",

@@ -18,6 +18,7 @@ from app.models.product import Product, ProductCategory, ProductVariant
 from app.repositories.product import ProductRepository
 from app.schemas.product import (
     ProductCreateRequest,
+    ProductUpdateRequest,
     ProductVariantCreateRequest,
     ProductVariantUpdateRequest,
 )
@@ -260,6 +261,11 @@ async def test_product_archive_and_variant_update_keep_scope() -> None:
     )
     variant = product.variants[0]
 
+    updated_product = await service.update_product(
+        business_id=business_id,
+        product_id=product.id,
+        payload=ProductUpdateRequest(name="Nasi Goreng Spesial"),
+    )
     updated = await service.update_variant(
         business_id=business_id,
         product_id=product.id,
@@ -268,6 +274,7 @@ async def test_product_archive_and_variant_update_keep_scope() -> None:
     )
     await service.archive_product(business_id=business_id, product_id=product.id)
 
+    assert updated_product.name == "Nasi Goreng Spesial"
     assert updated.selling_price == Decimal("27000")
     assert product.status == ProductStatus.ARCHIVED
 
@@ -280,6 +287,7 @@ def test_product_schema_rejects_invalid_margin_and_openapi_paths_exist() -> None
 
     paths = create_app(make_settings()).openapi()["paths"]
     assert "/api/v1/products" in paths
+    assert "/api/v1/products/{product_id}" in paths
     assert "/api/v1/products/{product_id}/variants" in paths
     assert "/api/v1/products/{product_id}/variants/{variant_id}" in paths
     assert "/api/v1/product-categories" in paths

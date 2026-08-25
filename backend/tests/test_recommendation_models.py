@@ -47,5 +47,5 @@ def test_recommendation_migration_is_latest() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     revisions = list(ScriptDirectory.from_config(config).walk_revisions("base", "heads"))
 
-    assert revisions[0].revision == "0011_audit_logs"
-    assert revisions[0].down_revision == "0010_recommendation_drafts"
+    assert revisions[0].revision == "0012_product_images"
+    assert revisions[0].down_revision == "0011_audit_logs"

@@ -63,6 +63,7 @@ def test_auth_migration_is_registered_as_first_revision() -> None:
 
     revisions = list(scripts.walk_revisions("base", "heads"))
     assert [revision.revision for revision in revisions] == [
+        "0012_product_images",
         "0011_audit_logs",
         "0010_recommendation_drafts",
         "0009_cost_versions",

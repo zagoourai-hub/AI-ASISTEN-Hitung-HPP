@@ -41,6 +41,8 @@ services:
       HPP_CORS_ALLOWED_ORIGINS: '${HPP_CORS_ALLOWED_ORIGINS:-["http://localhost:3000"]}'
       HPP_CORS_ALLOW_CREDENTIALS: "true"
       HPP_CURRENCY: IDR
+      HPP_MEDIA_ROOT: /app/media
+      HPP_PRODUCT_IMAGE_MAX_BYTES: ${HPP_PRODUCT_IMAGE_MAX_BYTES:-5242880}
       HPP_RATE_LIMIT_BACKEND: memory
       HPP_RATE_LIMIT_WINDOW_SECONDS: 60
       HPP_RATE_LIMIT_REQUESTS: 60
@@ -62,7 +64,11 @@ services:
       timeout: 5s
       retries: 6
       start_period: 15s
+    volumes:
+      - product_media:/app/media
 
 volumes:
   postgres_data:
     name: ${POSTGRES_VOLUME_NAME:-ai-hitung-hpp-postgres-data}
+  product_media:
+    name: ${PRODUCT_MEDIA_VOLUME_NAME:-ai-hitung-hpp-product-media}

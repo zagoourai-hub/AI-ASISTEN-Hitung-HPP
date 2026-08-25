@@ -69,7 +69,8 @@ def test_recipe_migration_is_registered_after_product_migration() -> None:
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     revisions = list(ScriptDirectory.from_config(config).walk_revisions("base", "heads"))
 
-    assert [revision.revision for revision in revisions[:7]] == [
+    assert [revision.revision for revision in revisions[:8]] == [
+        "0012_product_images",
         "0011_audit_logs",
         "0010_recommendation_drafts",
         "0009_cost_versions",

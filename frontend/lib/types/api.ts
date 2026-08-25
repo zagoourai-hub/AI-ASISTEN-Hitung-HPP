@@ -140,6 +140,7 @@ export interface Product {
   business_id: string
   category_id: string | null
   name: string
+  image_url: string | null
   status: ProductStatus
   created_at: string
   category: ProductCategory | null

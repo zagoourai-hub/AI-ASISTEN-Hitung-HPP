@@ -12,6 +12,7 @@ import { formatIDR, formatPercent, parseDecimalToNumber } from "@/lib/format"
 import type { ProductCostVersion, RecipeVersion } from "@/lib/types/api"
 import { Header } from "@/components/header"
 import { RecipeModal } from "@/components/products/recipe-modal"
+import { ProductImageManager } from "@/components/products/product-image"
 import { CostBreakdown } from "@/components/products/cost-breakdown"
 import { HppHistoryTable } from "@/components/products/hpp-history-table"
 import { Badge } from "@/components/ui/badge"
@@ -117,7 +118,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <Header title={product.name} breadcrumb="Produk" showPeriodSelector={false} />
 
       <Card className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-[#E8ECE9] bg-[#F3F5F4] text-4xl dark:border-[#2B312E] dark:bg-[#231E19]">●</div>
+        <ProductImageManager productId={product.id} productName={product.name} imageUrl={product.image_url} />
         <div className="flex-1 space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl font-bold tracking-tight text-[#161A18] dark:text-[#FAFBFA]">{product.name}</h1>

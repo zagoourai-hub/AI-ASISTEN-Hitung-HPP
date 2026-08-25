@@ -203,6 +203,39 @@ class IngredientService:
             await self.session.flush()
         return price_history
 
+    async def delete_price(
+        self,
+        *,
+        business_id: UUID,
+        ingredient_id: UUID,
+        price_history_id: UUID,
+    ) -> None:
+        async with self.session.begin():
+            ingredient = await self.repository.find_by_id(
+                self.session,
+                business_id=business_id,
+                ingredient_id=ingredient_id,
+            )
+            if ingredient is None:
+                raise self._not_found()
+
+            price_history = next(
+                (item for item in ingredient.price_history if item.id == price_history_id),
+                None,
+            )
+            if price_history is None:
+                raise self._not_found()
+
+            await self.session.delete(price_history)
+            await self.session.flush()
+            latest = await self.repository.find_effective_price(
+                self.session,
+                ingredient_id=ingredient.id,
+                price_as_of=utc_now(),
+            )
+            ingredient.current_unit_cost = latest.unit_cost if latest is not None else None
+            await self.session.flush()
+
     async def add_conversion(
         self,
         *,

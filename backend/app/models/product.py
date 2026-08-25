@@ -4,7 +4,16 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, String, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import MONEY_NUMERIC, Base
@@ -40,7 +49,14 @@ class ProductCategory(Base):
 
 class Product(Base):
     __tablename__ = "products"
-    __table_args__ = (UniqueConstraint("business_id", "name", name="product_business_name"),)
+    __table_args__ = (
+        UniqueConstraint("business_id", "name", name="product_business_name"),
+        CheckConstraint(
+            "(image_key IS NULL AND image_media_type IS NULL AND image_size_bytes IS NULL) OR "
+            "(image_key IS NOT NULL AND image_media_type IS NOT NULL AND image_size_bytes > 0)",
+            name="product_image_metadata_consistency",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     business_id: Mapped[UUID] = mapped_column(
@@ -54,6 +70,9 @@ class Product(Base):
         index=True,
     )
     name: Mapped[str] = mapped_column(String(160), nullable=False)
+    image_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    image_media_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    image_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     status: Mapped[ProductStatus] = mapped_column(
         Enum(ProductStatus, name="product_status"),
         default=ProductStatus.ACTIVE,
@@ -76,6 +95,13 @@ class Product(Base):
         back_populates="product",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def image_url(self) -> str | None:
+        if self.image_key is None:
+            return None
+        version = self.image_key.rsplit("/", 1)[-1]
+        return f"/api/v1/products/{self.id}/image?v={version}"
 
 
 class ProductVariant(Base):

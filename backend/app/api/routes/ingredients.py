@@ -116,6 +116,24 @@ async def add_ingredient_price(
     return PriceHistoryResponse.model_validate(price_history)
 
 
+@router.delete(
+    "/{ingredient_id}/prices/{price_history_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_ingredient_price(
+    ingredient_id: UUID,
+    price_history_id: UUID,
+    business: CurrentBusinessDependency,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> Response:
+    await IngredientService(session).delete_price(
+        business_id=business.id,
+        ingredient_id=ingredient_id,
+        price_history_id=price_history_id,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post(
     "/{ingredient_id}/conversions",
     response_model=UnitConversionResponse,

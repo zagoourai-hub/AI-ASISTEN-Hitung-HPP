@@ -39,6 +39,9 @@ class Settings(BaseSettings):
 
     currency: Literal["IDR"] = "IDR"
 
+    media_root: Annotated[str, Field(min_length=1)] = "media"
+    product_image_max_bytes: Annotated[int, Field(gt=0, le=20_971_520)] = 5_242_880
+
     rate_limit_backend: RateLimitBackend = "memory"
     rate_limit_window_seconds: Annotated[int, Field(gt=0, le=86_400)] = 60
     rate_limit_requests: Annotated[int, Field(gt=0, le=10_000)] = 60

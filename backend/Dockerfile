@@ -27,6 +27,7 @@ PY
 COPY --chown=appuser:appuser alembic.ini pyproject.toml ./
 COPY --chown=appuser:appuser app ./app
 COPY --chown=appuser:appuser migrations ./migrations
+RUN mkdir -p /app/media/products && chown -R appuser:appuser /app/media
 
 USER appuser
 

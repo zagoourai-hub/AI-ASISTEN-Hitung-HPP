@@ -36,5 +36,5 @@ def test_audit_migration_is_latest_and_reversible() -> None:
     revisions = list(ScriptDirectory.from_config(config).walk_revisions("base", "heads"))
     latest = revisions[0]
 
-    assert latest.revision == "0011_audit_logs"
-    assert cast(str, latest.down_revision) == "0010_recommendation_drafts"
+    assert latest.revision == "0012_product_images"
+    assert cast(str, latest.down_revision) == "0011_audit_logs"

@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/client"
+import { ENV } from "@/lib/env"
 import type {
   Ingredient,
   IngredientPriceHistory,
@@ -29,6 +30,30 @@ export function listIngredients(signal?: AbortSignal) {
 
 export function createIngredient(payload: IngredientCreatePayload) {
   return apiClient<Ingredient>("/ingredients", { method: "POST", body: payload })
+}
+
+export function getIngredient(ingredientId: string, signal?: AbortSignal) {
+  return apiClient<Ingredient>(`/ingredients/${encodeURIComponent(ingredientId)}`, {
+    method: "GET",
+    signal,
+  })
+}
+
+export function updateIngredient(
+  ingredientId: string,
+  payload: { name?: string; category?: string | null; base_unit?: string }
+) {
+  return apiClient<Ingredient>(
+    `/ingredients/${encodeURIComponent(ingredientId)}`,
+    { method: "PATCH", body: payload }
+  )
+}
+
+export function deleteIngredientPrice(ingredientId: string, priceHistoryId: string) {
+  return apiClient<void>(
+    `/ingredients/${encodeURIComponent(ingredientId)}/prices/${encodeURIComponent(priceHistoryId)}`,
+    { method: "DELETE" }
+  )
 }
 
 export function addIngredientPrice(
@@ -70,6 +95,20 @@ export function getProduct(productId: string, signal?: AbortSignal) {
   })
 }
 
+export function updateProduct(productId: string, payload: { name?: string }) {
+  return apiClient<Product>(
+    `/products/${encodeURIComponent(productId)}`,
+    { method: "PATCH", body: payload }
+  )
+}
+
+export function archiveProduct(productId: string) {
+  return apiClient<void>(
+    `/products/${encodeURIComponent(productId)}`,
+    { method: "DELETE" }
+  )
+}
+
 export function listProductCategories(signal?: AbortSignal) {
   return apiClient<PaginatedResponse<ProductCategory>>("/product-categories", {
     method: "GET",
@@ -92,6 +131,28 @@ export interface ProductCreatePayload {
 
 export function createProduct(payload: ProductCreatePayload) {
   return apiClient<Product>("/products", { method: "POST", body: payload })
+}
+
+export function uploadProductImage(productId: string, file: File) {
+  return apiClient<Product>(
+    `/products/${encodeURIComponent(productId)}/image`,
+    {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": file.type },
+    }
+  )
+}
+
+export function deleteProductImage(productId: string) {
+  return apiClient<void>(
+    `/products/${encodeURIComponent(productId)}/image`,
+    { method: "DELETE" }
+  )
+}
+
+export function getProductImageUrl(imageUrl: string | null) {
+  return imageUrl ? new URL(imageUrl, ENV.API_BASE_URL).toString() : null
 }
 
 export function updateProductVariant(

@@ -1,10 +1,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import CurrentBusinessDependency, PaginationDependency
+from app.core.config import Settings, get_settings
 from app.core.database import get_db_session
 from app.schemas.pagination import PageMeta
 from app.schemas.product import (
@@ -21,6 +23,7 @@ from app.schemas.product import (
     ProductVariantUpdateRequest,
 )
 from app.services.product import ProductService
+from app.services.product_image import ProductImageService, ProductImageStorage
 
 category_router = APIRouter(prefix="/product-categories", tags=["product-categories"])
 router = APIRouter(prefix="/products", tags=["products"])
@@ -132,6 +135,62 @@ async def create_product(
         default_target_margin=business.default_target_margin,
     )
     return ProductResponse.model_validate(product)
+
+
+@router.put("/{product_id}/image", response_model=ProductResponse)
+async def upload_product_image(
+    product_id: UUID,
+    request: Request,
+    business: CurrentBusinessDependency,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ProductResponse:
+    product = await ProductImageService(
+        session,
+        storage=ProductImageStorage(settings.media_root),
+    ).upload(
+        business_id=business.id,
+        product_id=product_id,
+        content_type=request.headers.get("content-type", ""),
+        chunks=request.stream(),
+        max_bytes=settings.product_image_max_bytes,
+    )
+    return ProductResponse.model_validate(product)
+
+
+@router.delete("/{product_id}/image", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product_image(
+    product_id: UUID,
+    business: CurrentBusinessDependency,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> Response:
+    await ProductImageService(
+        session,
+        storage=ProductImageStorage(settings.media_root),
+    ).remove(business_id=business.id, product_id=product_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/{product_id}/image")
+async def get_product_image(
+    product_id: UUID,
+    business: CurrentBusinessDependency,
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> FileResponse:
+    path, media_type = await ProductImageService(
+        session,
+        storage=ProductImageStorage(settings.media_root),
+    ).resolve(business_id=business.id, product_id=product_id)
+    return FileResponse(
+        path,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "private, max-age=3600",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

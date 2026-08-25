@@ -15,21 +15,21 @@ Last Updated: 2026-08-25
 
 ## Summary
 
-- Total: 57
-- Frontend: 21 (21 completed, 0 pending)
-- Backend: 31 (31 completed, 0 pending)
-- Integration: 5 (5 completed, 0 in progress, 0 pending, 0 blocked)
-- Completed: 57
+- Total: 70
+- Frontend: 25 (25 completed, 0 in progress, 0 pending)
+- Backend: 35 (35 completed, 0 in progress, 0 pending)
+- Integration: 10 (10 completed, 0 in progress, 0 pending, 0 blocked)
+- Completed: 70
 - In Progress: 0
 - Pending: 0
 - Blocked: 0
 - Skipped: 0
 
-## Final Checkpoint — 2026-08-22
+## Final Checkpoint — 2026-08-22 (historical baseline)
 
 - Frontend: 20/20 task completed melalui handoff agent frontend; typecheck, lint, production build, dan Playwright evidence tercatat pada tracker.
 - Backend: 31/31 task completed; 101 tests, Ruff, Pyright, OpenAPI, Alembic offline, dan live PostgreSQL pilot tercatat pada tracker.
-- Dokumentasi ini disinkronkan setelah kedua layer selesai; tidak ada source task baru yang dibuka.
+- Dokumentasi ini mencatat baseline sebelum task product image dibuka pada 2026-08-25.
 
 ## Integration Checkpoint — 2026-08-25
 
@@ -48,6 +48,54 @@ Last Updated: 2026-08-25
 - Evidence: `screenshots/register-toast-desktop.png`, `screenshots/login-toast-top-center-390x844.png`, dan screenshot live auth sebelumnya tetap berada di `screenshots/`.
 - Note: beberapa GET sempat `ERR_ABORTED` saat route transition dan retry berikutnya `200`; tidak ada kegagalan final API pada flow sukses.
 - Resume target 2026-08-26: tunggu daftar UI/product update berikutnya dari user, pecah menjadi task atomic baru sebelum implementasi.
+
+## Product Image Scope — 2026-08-25
+
+- User menyetujui local storage sementara.
+- Scope selesai: satu gambar per produk, JPG/PNG/WebP maksimal 5 MB, random server filename, signature validation, tenant guard, dan named Docker volume.
+- Batasan sengaja: belum ada SVG, gallery, crop/editor, object storage cloud, atau multi-image.
+- Verification: migration `0012_product_images` live, volume `ai-hitung-hpp-product-media`, backend/frontend quality gates, serta Playwright desktop/mobile.
+- Gallery, crop, SVG, dan object storage cloud belum termasuk scope.
+
+## Ingredient Edit & Price History Scope — 2026-08-25
+
+- User meminta rename nama bahan baku dan delete satu baris histori harga.
+- Delete histori memakai hard delete terkontrol dengan tenant guard; `current_unit_cost` dihitung ulang dari histori efektif terbaru yang tersisa, atau `null` bila tidak ada.
+- Archive bahan baku tetap terpisah dari scope ini; endpoint backend sudah ada tetapi tombol UI belum ditambahkan.
+
+## Ingredient Edit & Price History Checkpoint — 2026-08-25
+
+- Live Chrome berhasil rename melalui `PATCH 200`, menghapus histori melalui `DELETE 204`, lalu refetch detail melalui `GET 200`; nama baru dan empty-history state bertahan setelah query invalidation.
+- Desktop dan mobile 390x844 diverifikasi tanpa overflow horizontal; current-tab console errors `0`.
+- Evidence: `screenshots/ingredients-edit-history-desktop.png` dan `screenshots/ingredients-edit-history-mobile-390x844.png`.
+- Satu data uji baru diarsipkan kembali setelah bukti live diambil. Route transition sempat mencatat GET `ERR_ABORTED`, lalu retry `200`.
+
+## Product Edit & Archive Scope — 2026-08-25
+
+- User meminta aksi edit nama dan hapus produk dari section Produk.
+- Kontrak backend yang dipakai sudah tersedia: `PATCH` untuk rename dan `DELETE` untuk archive tenant-scoped; data resep dan histori HPP tetap dipertahankan.
+
+## Product Edit & Archive Checkpoint — 2026-08-25
+
+- `FE-P7-T001` dan `INT-P4-T001` selesai: setiap produk aktif memiliki aksi `Kelola` untuk edit nama dan archive dengan confirm, query invalidation, toast feedback, serta modal responsive.
+- Live Chrome: rename `PATCH 200`, archive fixture `DELETE 204`, refetch `GET 200`; nama baru bertahan setelah reload dan produk archived tidak tampil di daftar aktif.
+- Desktop dan mobile 390x844 diverifikasi tanpa page overflow (`scrollWidth` sama dengan viewport); current-tab console errors `0`.
+- Evidence: `screenshots/products-edit-delete-desktop.png` dan `screenshots/products-edit-delete-mobile-390x844.png`.
+- Archive adalah soft delete terkontrol; resep dan histori HPP dipertahankan. Fixture `Produk Gambar Playwright` diarsipkan kembali setelah bukti live.
+- Route transition sempat mencatat GET `ERR_ABORTED`, lalu retry `200`; tidak ada kegagalan final API pada flow sukses.
+
+## Product Responsive Scope — 2026-08-25
+
+- User meminta section Produk dirapikan untuk mobile, tablet, dan desktop.
+- Mobile dan tablet memakai product card agar nama, metrik, Detail, dan Kelola terbaca tanpa horizontal scroll; desktop lebar memakai tabel katalog.
+
+## Product Responsive Checkpoint — 2026-08-25
+
+- `FE-P8-T001` dan `INT-P5-T001` selesai: breakpoint `<xl` memakai kartu, `xl+` memakai tabel, toolbar dan action spacing disesuaikan, serta `scope="col"` ditambahkan pada tabel.
+- Live Chrome diverifikasi pada 390x844, 768x900, 1024x900, dan 1440x900; `scrollWidth` selalu sama dengan viewport.
+- Modal `Edit & Hapus Produk` terbuka dan tetap berada dalam viewport pada 390, 768, dan 1440; current-tab console errors `0`.
+- Evidence: `screenshots/products-responsive-mobile-390x844.png`, `screenshots/products-responsive-tablet-768x900.png`, `screenshots/products-responsive-desktop-1440x900.png`, dan `screenshots/products-responsive-modal-mobile-390x844.png`.
+- Build frontend dan route generation `14/14` passed. Route transition masih dapat mencatat GET `ERR_ABORTED` sementara, lalu retry `200`.
 
 ## Phase Gates
 
@@ -86,6 +134,10 @@ Stack: Next.js App Router + TypeScript strict
 | FE-P4-T002 | Phase 4 | FE | completed | Buat Playwright E2E flow register/login → ingredient → product → recipe → HPP → pricing | FE-P4-T001, BE-P4-T001 | 11 desktop & mobile screenshots captured in `screenshots/`; E2E spec in `frontend/tests/e2e-pilot-flow.spec.ts` | Proof in `screenshots/` |
 | FE-P4-T003 | Phase 4 | FE | completed | Jalankan frontend typecheck, lint, build, dan perbaiki issue yang ditemukan | FE-P4-T002 | `npx tsc --noEmit` 0 errors, `npm run lint` 0 errors/warnings, `npm run build` 13/13 routes passed | Frontend MVP 100% complete; handoff frontend agent diterima |
 | FE-P4-T004 | Phase 4 | FE | completed | Tambahkan global action feedback dan real query-driven loading states untuk auth/session/dashboard | FE-P4-T001, FE-P4-T003, INT-P1-T003 | `npm run lint`, `npx tsc --noEmit`, `npm run build`, dan Playwright auth desktop/mobile passed; success/error toast dan `isPending` skeleton verified; no artificial loading delay | Toast top-center memakai existing Radix UI; evidence disimpan di `screenshots/`; next UI updates menunggu prioritas user |
+| FE-P5-T001 | Phase 5 | FE | completed | Tambahkan product image picker, preview, replace/remove, fallback, alt text, dan responsive image presentation pada modal/list/detail | FE-P4-T004, BE-P5-T002, INT-P2-T001 | `npm run lint`, `npx tsc --noEmit`, `npm run build` passed; Playwright modal/list/detail desktop dan mobile passed | Satu gambar per produk; tidak mengubah layout mobile menjadi overflow |
+| FE-P6-T001 | Phase 6 | FE | completed | Tambahkan action edit nama bahan baku, detail histori harga, delete histori dengan confirm, invalidation, dan responsive state | FE-P2-T001, BE-P6-T001 | `npm run lint`, `tsc --noEmit`, `npm run build`, `git diff --check`, dan Playwright desktop/mobile passed; rename/delete live flow verified | Evidence in `screenshots/ingredients-edit-history-*.png`; fokus UI pada rename dan delete satu price-history row |
+| FE-P7-T001 | Phase 7 | FE | completed | Tambahkan action edit nama dan hapus/archive produk dari daftar Produk dengan confirm, invalidation, feedback, dan responsive state | FE-P2-T003, BE-P7-T001 | `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, dan Playwright desktop/mobile passed; live PATCH/DELETE/refetch verified | Hapus memakai archive agar resep dan histori HPP tetap aman |
+| FE-P8-T001 | Phase 8 | FE | completed | Rapikan section Produk untuk mobile, tablet, dan desktop dengan product card responsive, tabel desktop, toolbar spacing, dan semantic table headers | FE-P7-T001 | `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, serta screenshot Chrome 390/768/1440 passed | Breakpoint `<xl` mengutamakan scanability dan action visibility; `xl+` mempertahankan katalog tabel |
 
 ## [BE] Backend Tasks
 
@@ -124,6 +176,10 @@ Stack: FastAPI + Python typed, SQLAlchemy 2.x async, Alembic, PostgreSQL
 | BE-P4-T002 | Phase 4 | BE | completed | Jalankan edge-case tests untuk empty recipe, missing price, invalid unit, duplicate data, concurrent activation, dan archive references | BE-P2-T008, BE-P3-T006 | 40 edge-case/domain tests passed; empty recipe, missing price, invalid unit, duplicate data, activation transition, and archive/reference boundaries verified | Validation and historical references remain protected |
 | BE-P4-T003 | Phase 4 | BE | completed | Verifikasi pagination, query performance, p95 target, timeout handling, dan database conflict behavior pada dataset pilot | BE-P3-T003, BE-P3-T005 | 101 backend tests passed; live ephemeral PostgreSQL 16 pilot dataset 100 products, 100 variants, 100 ingredients, 10 overheads; HPP calculation p95 11.60 ms and HPP history p95 8.30 ms (<500 ms); timeout config/504 sanitization and database conflict behavior verified; Alembic full offline upgrade/downgrade passed | Live p95 executed against an ephemeral PostgreSQL 16 runtime; auth transaction boundary fixed after real DB smoke caught SQLAlchemy autobegin conflict; temporary runtime removed |
 | BE-P4-T004 | Phase 4 | BE | completed | Lengkapi migration/backup-restore runbook, structured logging, requestId, OpenAPI export, dan CI verification command | BE-P4-T001, BE-P4-T002, BE-P4-T003 | 101 backend tests passed; Ruff check/format and Pyright 0 errors; JSON structured formatter and requestId log/response parity tested; OpenAPI export validated; `scripts/verify_backend.sh` passed; Alembic full offline upgrade/downgrade generated | Runbook in `docs/backend-runbook.md`; no external provider required for CI verification |
+| BE-P5-T001 | Phase 5 | BE | completed | Tambahkan product image metadata, Alembic migration, media directory config, dan named Docker volume tanpa menyimpan binary pada response katalog | BE-P4-T004 | Migration `0012_product_images` applied in Docker; `product_media` mounted at `/app/media`; full pytest, Ruff, dan Pyright passed | Binary tetap di volume lokal; katalog hanya mengembalikan `image_url` |
+| BE-P5-T002 | Phase 5 | BE | completed | Implementasikan upload/delete/serve image API dengan auth tenant scope, size/MIME/signature validation, random filename, dan sanitized error | BE-P5-T001, BE-P1-T007 | Storage tests untuk signature/size/path passed; live PUT/GET/DELETE image `200/200/204`; payload signature palsu live `422`; cache-busting version image verified | Allowlist JPG/PNG/WebP, maksimal 5 MB, SVG ditolak |
+| BE-P6-T001 | Phase 6 | BE | completed | Tambahkan delete price-history API/service/repository dengan tenant guard, recompute current cache, not-found handling, dan regression tests; pertahankan PATCH rename existing | BE-P2-T005, BE-P3-T001, BE-P4-T004 | Full pytest passed; Ruff check/format passed; Pyright 0 errors; OpenAPI delete path and current-cache recomputation regression verified | Hard delete hanya untuk histori harga yang dipilih; HPP tetap menolak bila tidak ada effective price |
+| BE-P7-T001 | Phase 7 | BE | completed | Konfirmasi dan regression-check kontrak PATCH rename serta DELETE archive produk dengan tenant guard | BE-P2-T006, BE-P4-T002 | Existing `ProductService.update_product` dan `archive_product`, route OpenAPI, tenant-scoped repository, dan archive regression test sudah tersedia; tidak perlu migration | DELETE produk adalah archive terkontrol, bukan hard delete |
 
 ## [INT] Frontend–Backend Integration Tasks
 
@@ -136,6 +192,11 @@ Stack: Next.js App Router + TypeScript strict + React Hook Form + TanStack Query
 | INT-P1-T001 | Integration | FE | completed | Hubungkan ingredient, product, variant, recipe, dan conversion CRUD memakai TanStack Query mutations/invalidation | INT-P0-T002, FE-P2-T004, BE-P2-T007 | Live browser created ingredient, product, draft recipe, activated recipe, and reloaded API-backed lists; PostgreSQL persistence verified; service response eager-load regressions fixed | Tenant-scoped API responses preserved |
 | INT-P1-T002 | Integration | FE | completed | Hubungkan HPP history, pricing recommendation, discount simulation, dashboard, dan reports ke API server state | INT-P1-T001, FE-P3-T005, BE-P3-T005 | Live browser HPP/history, dashboard, pricing recommendation, and discount simulation passed with backend Decimal responses; reports remains roadmap because no MVP aggregate endpoint exists | No client-side authoritative calculation; reports intentionally post-MVP |
 | INT-P1-T003 | Integration | FE/BE | completed | Verifikasi MVP end-to-end live dengan PostgreSQL, console/network checks, responsive smoke, dan full quality gates | INT-P1-T002, BE-P4-T003, FE-P4-T003 | Docker Compose PostgreSQL/backend healthy; API/Next health 200; Alembic `0011_audit_logs` head; browser desktop/mobile evidence; current-tab console 0 errors; backend 101 pytest/Ruff/Pyright; frontend tsc/ESLint/build 13/13; `git diff --check` passed | Integration MVP gate passed; reports/AI remain out of MVP scope |
+| INT-P2-T001 | Integration | FE/BE | completed | Hubungkan binary image upload, query invalidation, dan alur create/edit/detail product image dengan typed API contract | FE-P5-T001, BE-P5-T002 | Live create `POST 201` + image `PUT 200`, list/detail `GET 200`, replace `PUT 200`, remove `DELETE 204`; list/detail invalidation verified | Jika upload gagal setelah product tersimpan, UI memberi retryable feedback |
+| INT-P2-T002 | Integration | FE/BE | completed | Jalankan backend tests, frontend lint/typecheck/build, dan Playwright Chrome desktop/mobile untuk upload, replace, remove, auth, network, console, serta screenshots | INT-P2-T001 | Full backend pytest/Ruff/Pyright; frontend lint/tsc/build; Playwright desktop/mobile screenshots; final console errors `0` | Evidence: `screenshots/product-image-desktop.png`, `screenshots/product-image-mobile-390x844.png`, dan `screenshots/product-image-list-desktop.png`; satu route-transition GET sempat `ERR_ABORTED` lalu retry `200` |
+| INT-P3-T001 | Integration | FE/BE | completed | Verifikasi live rename ingredient dan delete price history di Chrome desktop/mobile dengan network, console, persistence, dan screenshot evidence | FE-P6-T001, BE-P6-T001 | Live `POST 201` fixture, `PATCH 200`, price-history `DELETE 204`, refetch `GET 200`, refresh persistence, mobile no-overflow, console errors `0`, dan screenshots passed | Test ingredient diarsipkan setelah verifikasi; route-transition GET `ERR_ABORTED` retry `200` |
+| INT-P4-T001 | Integration | FE/BE | completed | Verifikasi live edit nama dan archive produk di Chrome desktop/mobile dengan network, console, persistence, dan screenshot evidence | FE-P7-T001, BE-P7-T001 | Live `PATCH 200`, archive `DELETE 204`, refetch `GET 200`, refresh persistence, mobile no-overflow, console errors `0`, dan screenshots passed | Test product diarsipkan setelah verifikasi; route-transition GET `ERR_ABORTED` retry `200` |
+| INT-P5-T001 | Integration | FE/BE | completed | Verifikasi responsive section Produk di Chrome mobile, tablet, dan desktop termasuk action modal, overflow, console, dan screenshot evidence | FE-P8-T001, BE-P7-T001 | Live 390x844, 768x900, 1024x900, 1440x900; modal dialog bounds valid; page no-overflow; console errors `0`; screenshots passed | Product API read/refetch `200`; route-transition abort bersifat sementara dan retry berhasil |
 
 ## Execution Rules
 

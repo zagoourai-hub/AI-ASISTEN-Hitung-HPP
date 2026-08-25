@@ -153,6 +153,7 @@ class ProductResponse(BaseModel):
     business_id: UUID
     category_id: UUID | None
     name: str
+    image_url: str | None = None
     status: ProductStatus
     created_at: datetime
     category: ProductCategoryResponse | None = None

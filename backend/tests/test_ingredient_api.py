@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import cast
 from uuid import UUID, uuid4
@@ -35,12 +36,16 @@ class FakeTransaction:
 class FakeSession:
     def __init__(self) -> None:
         self.added: list[object] = []
+        self.deleted: list[object] = []
 
     def begin(self) -> FakeTransaction:
         return FakeTransaction()
 
     def add(self, instance: object) -> None:
         self.added.append(instance)
+
+    async def delete(self, instance: object) -> None:
+        self.deleted.append(instance)
 
     async def flush(self) -> None:
         return None
@@ -86,6 +91,25 @@ class FakeIngredientRepository:
     ) -> IngredientUnitConversion | None:
         return self.conversions.get((from_unit, to_unit))
 
+    async def find_effective_price(
+        self,
+        session: AsyncSession,
+        *,
+        ingredient_id: object,
+        price_as_of: datetime,
+    ) -> IngredientPriceHistory | None:
+        deleted_ids = {getattr(item, "id", None) for item in getattr(session, "deleted", [])}
+        candidates = [
+            item
+            for item in getattr(self, "prices", [])
+            if item.id not in deleted_ids
+            and item.ingredient_id == ingredient_id
+            and item.effective_at <= price_as_of
+        ]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda item: (item.effective_at, item.id))
+
     def add_ingredient(self, session: AsyncSession, ingredient: Ingredient) -> None:
         session.add(ingredient)
         self.ingredient = ingredient
@@ -96,6 +120,7 @@ class FakeIngredientRepository:
         price_history: IngredientPriceHistory,
     ) -> None:
         session.add(price_history)
+        self.prices = [*getattr(self, "prices", []), price_history]
 
     def add_conversion(
         self,
@@ -251,7 +276,50 @@ def test_ingredient_routes_are_in_openapi_and_use_v1_prefix() -> None:
 
     assert "/api/v1/ingredients" in paths
     assert "/api/v1/ingredients/{ingredient_id}/prices" in paths
+    assert "/api/v1/ingredients/{ingredient_id}/prices/{price_history_id}" in paths
     assert "/api/v1/ingredients/{ingredient_id}/conversions" in paths
+
+
+@pytest.mark.asyncio
+async def test_delete_price_removes_history_and_recomputes_current_cost() -> None:
+    business_id = uuid4()
+    ingredient = make_ingredient(business_id)
+    older = IngredientPriceHistory(
+        id=uuid4(),
+        ingredient_id=ingredient.id,
+        purchase_price=Decimal("100"),
+        purchase_quantity=Decimal("1"),
+        purchase_unit="gram",
+        unit_cost=Decimal("100.0000"),
+        effective_at=datetime.now(UTC) - timedelta(days=1),
+    )
+    latest = IngredientPriceHistory(
+        id=uuid4(),
+        ingredient_id=ingredient.id,
+        purchase_price=Decimal("150"),
+        purchase_quantity=Decimal("1"),
+        purchase_unit="gram",
+        unit_cost=Decimal("150.0000"),
+        effective_at=datetime.now(UTC) - timedelta(hours=1),
+    )
+    ingredient.price_history.extend([older, latest])
+    ingredient.current_unit_cost = latest.unit_cost
+    session = FakeSession()
+    repository = FakeIngredientRepository(ingredient)
+    repository.prices = [older, latest]
+    service = IngredientService(
+        cast(AsyncSession, session),
+        repository=cast(IngredientRepository, repository),
+    )
+
+    await service.delete_price(
+        business_id=business_id,
+        ingredient_id=ingredient.id,
+        price_history_id=latest.id,
+    )
+
+    assert session.deleted == [latest]
+    assert ingredient.current_unit_cost == older.unit_cost
 
 
 @pytest.mark.asyncio
