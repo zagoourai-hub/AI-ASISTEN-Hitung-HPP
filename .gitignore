@@ -27,6 +27,7 @@ backend/.pyright/
 
 # Test and tool caches
 .ai-agents/
+.agents/
 .pytest_cache/
 .ruff_cache/
 .playwright-mcp/
