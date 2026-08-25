@@ -10,20 +10,22 @@ Last Updated: 2026-08-25
 - Repository boundary: `frontend/` dan `backend/`.
 - One user owns one business; currency MVP IDR.
 - HPP uses the latest effective ingredient price and backend Decimal arithmetic.
-- AI, inventory, POS, finance, reporting, competitor pricing, dan delivery fee are post-MVP.
+- Inventory, POS, finance, reporting, competitor pricing, dan delivery fee remain post-MVP.
+- AI Assistant integration dibuka sebagai scope post-MVP terpisah pada 2026-08-25 dengan OpenRouter structured output.
 - Frontend Phase 0-4 dan Backend Phase 0-4 sudah selesai; handoff frontend dari agent terpisah tercatat pada task rows dan bukti verifikasinya dipertahankan.
 
 ## Summary
 
-- Total: 70
+- Total: 79
 - Frontend: 25 (25 completed, 0 in progress, 0 pending)
 - Backend: 35 (35 completed, 0 in progress, 0 pending)
 - Integration: 10 (10 completed, 0 in progress, 0 pending, 0 blocked)
-- Completed: 70
-- In Progress: 0
+- AI: 9 (3 completed, 1 in progress, 0 blocked, 0 pending, 5 skipped)
+- Completed: 73
+- In Progress: 1
 - Pending: 0
 - Blocked: 0
-- Skipped: 0
+- Skipped: 5
 
 ## Final Checkpoint — 2026-08-22 (historical baseline)
 
@@ -181,6 +183,22 @@ Stack: FastAPI + Python typed, SQLAlchemy 2.x async, Alembic, PostgreSQL
 | BE-P6-T001 | Phase 6 | BE | completed | Tambahkan delete price-history API/service/repository dengan tenant guard, recompute current cache, not-found handling, dan regression tests; pertahankan PATCH rename existing | BE-P2-T005, BE-P3-T001, BE-P4-T004 | Full pytest passed; Ruff check/format passed; Pyright 0 errors; OpenAPI delete path and current-cache recomputation regression verified | Hard delete hanya untuk histori harga yang dipilih; HPP tetap menolak bila tidak ada effective price |
 | BE-P7-T001 | Phase 7 | BE | completed | Konfirmasi dan regression-check kontrak PATCH rename serta DELETE archive produk dengan tenant guard | BE-P2-T006, BE-P4-T002 | Existing `ProductService.update_product` dan `archive_product`, route OpenAPI, tenant-scoped repository, dan archive regression test sudah tersedia; tidak perlu migration | DELETE produk adalah archive terkontrol, bukan hard delete |
 
+## [AI] OpenRouter Integration Tasks
+
+Stack: FastAPI + `httpx` + OpenRouter Chat Completions SSE + Next.js client stream
+
+| ID | Phase | Layer | Status | Task | Dependencies | Verification | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| AI-P0-T001 | Post-MVP | AI/BE | completed | Tambahkan typed OpenRouter env, default `openrouter/free`, server-side provider service, auth-protected `/api/v1/ai/stream`, bounded prompt, timeout, error mapping, dan cancellation-safe SSE | BE-P4-T004 | 6 focused pytest passed; Ruff/Pyright passed; OpenAPI path registered; provider key tidak pernah masuk response/log | Tidak menambah SDK; `httpx` existing dipakai; API key hanya backend env |
+| AI-P0-T002 | Post-MVP | AI/FE | completed | Hubungkan halaman AI Assistant ke POST SSE dengan incremental answer, loading/disabled, error, cancel, retry, dan accessible live region | AI-P0-T001, FE-P4-T004 | Frontend lint, typecheck, dan build passed; browser unconfigured state verified under AI-P0-T003 | Menghapus submit mock yang tidak melakukan request |
+| AI-P0-T003 | Post-MVP | AI/FE/BE | skipped | Verifikasi integrasi OpenRouter structured output secara live pada Chrome desktop/mobile dan cek URL, network, console, response stream, no-overflow, serta screenshot | AI-P0-T001, AI-P0-T002 | Dihentikan oleh keputusan user 2026-08-25 | Structured analyst UI diganti chat streaming biasa pada AI-P0-T009 |
+| AI-P0-T004 | Post-MVP | AI/BE | skipped | Ubah kontrak AI menjadi structured analyst analysis yang tervalidasi dari konteks bisnis: periode, summary margin/HPP, metrik delta, penyebab utama, rekomendasi berurutan, insight, dan sumber data | AI-P0-T003 | Dihentikan oleh keputusan user 2026-08-25 | Snapshot DB tenant tetap dipertahankan; JSON schema output dihapus pada AI-P0-T009 |
+| AI-P0-T005 | Post-MVP | AI/FE | skipped | Render structured AI analysis menjadi analyst cards responsif sesuai referensi: header, source badge, summary, metric cards, causes, priority recommendations, insight, loading/error/empty state | AI-P0-T004 | Dihentikan oleh keputusan user 2026-08-25 | Diganti jawaban chat teks rapi tanpa analyst cards |
+| AI-P0-T006 | Post-MVP | AI/FE | skipped | Ganti skeleton loading AI dengan vertical process timeline yang melacak tahap persiapan konteks, analisis, dan penyusunan rekomendasi sampai response selesai/error | AI-P0-T002 | Dihentikan oleh keputusan user 2026-08-25 | Timeline dan icon proses dihapus karena menambah persepsi lag/stuck |
+| AI-P0-T007 | Post-MVP | AI/FE | skipped | Hentikan loading AI secara deterministik saat SSE provider idle/terputus; tampilkan error retryable dan cegah request lama mengunci input | AI-P0-T002, AI-P0-T006 | Diserap AI-P0-T009 | Fixed total timeout diganti rolling idle timeout yang reset setiap chunk |
+| AI-P0-T008 | Post-MVP | AI/FE/BE | completed | Cegah jawaban lama/tidak relevan dengan snapshot data tenant terbaru per request, cache bypass, stale-response guard, dan penghapusan konteks demo hardcoded | AI-P0-T001, AI-P0-T002 | AI pytest 9/9, Ruff, Pyright 0 errors, frontend lint/typecheck/build 14/14, backend container healthy; live authenticated SSE tenant baru memuat nama bisnis snapshot terbaru, `analysis`, `done`, dan `no-store`; tenant uji dihapus | Request hanya menyimpan pertanyaan aktif; snapshot DB tenant dibatasi 20 row per kelompok; konteks/percakapan demo lama dihapus |
+| AI-P0-T009 | Post-MVP | AI/FE/BE | in_progress | Ganti structured analyst/timeline menjadi chat teks streaming incremental seperti ChatGPT dengan typing cursor, rolling idle timeout, cancel/retry, dan jawaban teks rapi | AI-P0-T008 | Pending: backend/frontend regression, live partial-token proof, desktop/mobile, console/network, screenshot | Tanpa dependency baru; snapshot DB tenant dan SSE security tetap dipertahankan |
+
 ## [INT] Frontend–Backend Integration Tasks
 
 Stack: Next.js App Router + TypeScript strict + React Hook Form + TanStack Query + Zustand + Axios + FastAPI `/api/v1`
@@ -205,4 +223,4 @@ Stack: Next.js App Router + TypeScript strict + React Hook Form + TanStack Query
 3. Hanya satu task boleh `in_progress` pada satu waktu.
 4. Task berikutnya tidak dimulai sebelum verification task aktif berhasil.
 5. Semua perubahan schema production memakai Alembic.
-6. AI dan modul ERP post-MVP tidak dibuat pada tracker MVP ini.
+6. AI dan modul ERP tetap di luar MVP core; AI hanya dikerjakan pada section `[AI]` setelah task dibuka eksplisit.

@@ -26,6 +26,9 @@ services:
       args:
         PYTHON_IMAGE: ${PYTHON_IMAGE:-python:3.12-slim}
     restart: unless-stopped
+    env_file:
+      - path: ./backend/.env
+        required: false
     environment:
       HPP_ENVIRONMENT: ${HPP_ENVIRONMENT:-development}
       HPP_DATABASE_URL: "postgresql+asyncpg://${POSTGRES_USER:-hpp_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-hpp}"
@@ -47,6 +50,13 @@ services:
       HPP_RATE_LIMIT_WINDOW_SECONDS: 60
       HPP_RATE_LIMIT_REQUESTS: 60
       HPP_RATE_LIMIT_LOGIN_REQUESTS: 5
+      HPP_RATE_LIMIT_AI_REQUESTS: ${HPP_RATE_LIMIT_AI_REQUESTS:-20}
+      HPP_OPENROUTER_MODEL: ${HPP_OPENROUTER_MODEL:-nvidia/nemotron-3-super-120b-a12b:free}
+      HPP_OPENROUTER_BASE_URL: ${HPP_OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      HPP_OPENROUTER_HTTP_REFERER: ${HPP_OPENROUTER_HTTP_REFERER:-http://localhost:3000}
+      HPP_OPENROUTER_APP_TITLE: ${HPP_OPENROUTER_APP_TITLE:-HPP Pintar}
+      HPP_OPENROUTER_TIMEOUT_SECONDS: ${HPP_OPENROUTER_TIMEOUT_SECONDS:-60}
+      HPP_OPENROUTER_MAX_TOKENS: ${HPP_OPENROUTER_MAX_TOKENS:-2000}
     ports:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     depends_on:

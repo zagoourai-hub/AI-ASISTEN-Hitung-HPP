@@ -60,3 +60,17 @@ async def login_rate_limit_dependency(
 
 AuthRateLimitDependency = Annotated[None, Depends(auth_rate_limit_dependency)]
 LoginRateLimitDependency = Annotated[None, Depends(login_rate_limit_dependency)]
+
+
+async def ai_rate_limit_dependency(
+    request: Request,
+    settings: Settings = Depends(get_settings),
+) -> None:
+    auth_rate_limiter.check(
+        key=_client_key(request, settings),
+        limit=settings.rate_limit_ai_requests,
+        window_seconds=settings.rate_limit_window_seconds,
+    )
+
+
+AiRateLimitDependency = Annotated[None, Depends(ai_rate_limit_dependency)]

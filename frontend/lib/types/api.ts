@@ -21,6 +21,8 @@ export type SemanticErrorCode =
   | "INVALID_MARGIN"
   | "CALCULATION_CONFLICT"
   | "RATE_LIMITED"
+  | "AI_NOT_CONFIGURED"
+  | "AI_PROVIDER_ERROR"
   | "INTERNAL_ERROR"
 
 export interface ApiErrorResponse {

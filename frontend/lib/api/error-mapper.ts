@@ -21,6 +21,10 @@ export function mapSemanticErrorToMessage(
       return "Terjadi konflik perhitungan HPP. Silakan refresh halaman dan hitung ulang."
     case "RATE_LIMITED":
       return "Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi."
+    case "AI_NOT_CONFIGURED":
+      return "AI belum dikonfigurasi. Tambahkan API key OpenRouter di backend terlebih dahulu."
+    case "AI_PROVIDER_ERROR":
+      return "Provider AI sedang bermasalah. Coba lagi sebentar."
     case "VALIDATION_ERROR":
       return "Data yang dimasukkan tidak valid. Periksa kembali form input Anda."
     case "UNAUTHENTICATED":

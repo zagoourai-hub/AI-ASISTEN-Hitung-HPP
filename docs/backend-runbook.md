@@ -13,6 +13,15 @@ minimum 32-character secret, and applies
 `HPP_DATABASE_COMMAND_TIMEOUT_SECONDS` (default `10`). Never put credentials
 in this document, the repository, logs, or an OpenAPI response.
 
+## OpenRouter AI (optional)
+
+Set `HPP_OPENROUTER_API_KEY` only in the local `.env` or deployment secret
+store. The default model is `openrouter/free`; change it with
+`HPP_OPENROUTER_MODEL` when a specific free variant is needed. The key is read
+only by FastAPI and is never sent to the browser. Without a key, the protected
+`POST /api/v1/ai/stream` endpoint returns a sanitized `AI_NOT_CONFIGURED`
+response.
+
 ## Local Docker Compose
 
 The project Compose setup runs PostgreSQL and the FastAPI backend. The backend

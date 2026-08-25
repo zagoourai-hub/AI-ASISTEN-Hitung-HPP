@@ -46,6 +46,17 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: Annotated[int, Field(gt=0, le=86_400)] = 60
     rate_limit_requests: Annotated[int, Field(gt=0, le=10_000)] = 60
     rate_limit_login_requests: Annotated[int, Field(gt=0, le=100)] = 5
+    rate_limit_ai_requests: Annotated[int, Field(gt=0, le=100)] = 20
+
+    openrouter_api_key: SecretStr | None = None
+    openrouter_model: Annotated[str, Field(min_length=1, max_length=120)] = "openrouter/free"
+    openrouter_base_url: Annotated[str, Field(min_length=1, max_length=300)] = (
+        "https://openrouter.ai/api/v1"
+    )
+    openrouter_http_referer: Annotated[str, Field(max_length=300)] | None = None
+    openrouter_app_title: Annotated[str, Field(min_length=1, max_length=100)] = "HPP Pintar"
+    openrouter_timeout_seconds: Annotated[float, Field(gt=0, le=300)] = 60.0
+    openrouter_max_tokens: Annotated[int, Field(gt=0, le=4096)] = 800
 
     @field_validator("database_url")
     @classmethod
