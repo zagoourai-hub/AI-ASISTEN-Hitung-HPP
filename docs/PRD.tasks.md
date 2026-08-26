@@ -1,4 +1,4 @@
-# Task Tracker — HPP Pintar v2.0
+# Task Tracker — M0neyku v2.0
 
 Source PRD: `PRD.md`
 Profile/Stack: Next.js + TypeScript, FastAPI + Python, PostgreSQL, OpenAPI

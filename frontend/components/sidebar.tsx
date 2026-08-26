@@ -58,7 +58,7 @@ export function Sidebar() {
         >
           <Link
             href="/"
-            aria-label="HPP Pintar"
+            aria-label="M0neyku"
             className={cn(
               "flex min-w-0 items-center",
               isOpen ? "gap-3 px-2" : "justify-center"
@@ -82,7 +82,7 @@ export function Sidebar() {
                   transition={labelTransition}
                   className="whitespace-nowrap text-lg font-bold tracking-tight text-[#161A18] dark:text-[#FAFBFA]"
                 >
-                  HPP Pintar
+                  M0neyku
                 </motion.span>
               )}
             </AnimatePresence>

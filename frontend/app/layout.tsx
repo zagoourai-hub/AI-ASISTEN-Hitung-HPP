@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: "HPP Pintar — Hitung HPP & Harga Jual UMKM",
+  title: "M0neyku — Hitung HPP & Harga Jual UMKM",
   description: "Aplikasi kalkulasi HPP deterministik dan simulasi harga berbasis margin untuk UMKM F&B Indonesia.",
 }
 

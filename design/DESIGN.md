@@ -1,6 +1,6 @@
-# DESIGN.md — HPP Pintar v2.0
+# DESIGN.md — M0neyku v2.0
 
-> **Produk:** HPP Pintar
+> **Produk:** M0neyku
 > **Tipe:** UI/UX Design Specification
 > **Platform:** Responsive Web
 > **Target pengguna utama:** Gen Z founder / UMKM owner muda
@@ -11,7 +11,7 @@
 
 # 1. Design Goals
 
-UI HPP Pintar harus terasa:
+UI M0neyku harus terasa:
 
 * modern;
 * ringan;
@@ -129,7 +129,7 @@ Bukan bubble chat panjang tanpa struktur.
 
 # 3. Brand Personality
 
-Karakter visual HPP Pintar:
+Karakter visual M0neyku:
 
 * **Reliable**
 * **Sharp**
@@ -566,7 +566,7 @@ Hitung HPP, Tentukan Harga, dan Tahu Untung Sebenarnya.
 Subheadline:
 
 ```text id="gfe7ib"
-HPP Pintar membantu kamu menghitung biaya produk, melihat margin, dan mendapatkan rekomendasi harga jual dengan bantuan AI yang transparan.
+M0neyku membantu kamu menghitung biaya produk, melihat margin, dan mendapatkan rekomendasi harga jual dengan bantuan AI yang transparan.
 ```
 
 CTA:
@@ -1363,7 +1363,7 @@ Checklist:
 
 Ringkasan arah desain final:
 
-> **HPP Pintar harus terlihat seperti financial product modern untuk founder muda — clean, smart, practical, dan terpercaya.**
+> **M0neyku harus terlihat seperti financial product modern untuk founder muda — clean, smart, practical, dan terpercaya.**
 
 Kata kunci final:
 

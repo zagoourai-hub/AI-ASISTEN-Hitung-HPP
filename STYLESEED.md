@@ -1,6 +1,6 @@
-# STYLESEED — HPP Pintar v2.0
+# STYLESEED — M0neyku v2.0
 
-> **Design System Authority for HPP Pintar**
+> **Design System Authority for M0neyku**
 > Target: F&B UMKM owners & Gen-Z founders in Indonesia.
 > Direction: Modern SaaS + Financial Clarity + Clean Startup Dashboard.
 > Anti-Slop Policy: Strictly avoid generic AI templates, excessive gradients, random glassmorphism, 3D blobs, or fake chatbot bubbles.

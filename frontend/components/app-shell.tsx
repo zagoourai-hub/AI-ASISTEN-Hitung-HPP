@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <span className="text-base font-bold tracking-tight text-[#161A18] dark:text-[#FAFBFA]">
-            HPP Pintar
+            M0neyku
           </span>
         </Link>
 
