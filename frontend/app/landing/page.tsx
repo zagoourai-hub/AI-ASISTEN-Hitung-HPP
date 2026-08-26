@@ -30,14 +30,14 @@ const FAQ_ITEMS = [
       "HPP (Harga Pokok Produksi) adalah total biaya untuk membuat satu produk. Di usaha kuliner, hitungannya bisa mencakup bahan baku, kemasan, tenaga kerja, dan overhead.",
   },
   {
-    question: "HPP Pintar cocok untuk usaha apa?",
+    question: "M0neyku cocok untuk usaha apa?",
     answer:
-      "HPP Pintar dibuat untuk pemilik kedai, bakery, katering, dapur rumahan, dan bisnis makanan atau minuman yang menjual produk berdasarkan resep.",
+      "M0neyku dibuat untuk pemilik kedai, bakery, katering, dapur rumahan, dan bisnis makanan atau minuman yang menjual produk berdasarkan resep.",
   },
   {
-    question: "Apakah HPP Pintar adalah aplikasi kasir?",
+    question: "Apakah M0neyku adalah aplikasi kasir?",
     answer:
-      "Bukan. HPP Pintar fokus pada biaya dan harga per menu. Kamu bisa memakainya sebelum produk dijual atau saat perlu meninjau harga yang sudah berjalan.",
+      "Bukan. M0neyku fokus pada biaya dan harga per menu. Kamu bisa memakainya sebelum produk dijual atau saat perlu meninjau harga yang sudah berjalan.",
   },
   {
     question: "Bisa dipakai untuk banyak menu?",
@@ -63,7 +63,7 @@ function ProductPreview() {
   return (
     <figure className="border border-[#D5DAD7] bg-white dark:border-[#2B312E] dark:bg-[#161A18]">
       <figcaption className="flex items-center justify-between gap-4 border-b border-[#E8ECE9] px-4 py-3 text-xs dark:border-[#2B312E] sm:px-5">
-        <span className="font-semibold text-[#444B47] dark:text-[#D5DAD7]">HPP Pintar / Produk</span>
+        <span className="font-semibold text-[#444B47] dark:text-[#D5DAD7]">M0neyku / Produk</span>
         <span className="font-medium text-[#737B76] dark:text-[#98A09B]">Contoh data</span>
       </figcaption>
 
@@ -156,7 +156,7 @@ export default function LandingPage() {
         >
           <Link href="/landing" className="flex items-center gap-2.5" onClick={closeMenu}>
             <BrandMark />
-            <span className="text-base font-bold tracking-tight">HPP Pintar</span>
+            <span className="text-base font-bold tracking-tight">M0neyku</span>
           </Link>
 
           <div className="hidden items-center gap-7 lg:flex">
@@ -251,7 +251,7 @@ export default function LandingPage() {
                 Hitung biaya setiap menu. Tentukan harga jual dengan angka.
               </h1>
               <p className="mt-6 max-w-lg text-base leading-7 text-[#5F6762] dark:text-[#B8C0BB] sm:text-lg">
-                HPP Pintar membantu pemilik kedai, bakery, katering, dan bisnis makanan menghitung biaya bahan, resep, kemasan, tenaga kerja, serta overhead dalam satu alur.
+                M0neyku membantu pemilik kedai, bakery, katering, dan bisnis makanan menghitung biaya bahan, resep, kemasan, tenaga kerja, serta overhead dalam satu alur.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link href="/register" className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#14804A] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#10673C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#111315]">
@@ -315,7 +315,7 @@ export default function LandingPage() {
               Bahan masuk. HPP terbentuk. Harga jadi masuk akal.
             </h2>
             <p className="mt-4 text-base leading-7 text-[#5F6762] dark:text-[#B8C0BB]">
-              Kamu tidak perlu menebak biaya dari omzet. HPP Pintar mengikuti alur sederhana dari resep sampai keputusan harga.
+              Kamu tidak perlu menebak biaya dari omzet. M0neyku mengikuti alur sederhana dari resep sampai keputusan harga.
             </p>
           </div>
 
@@ -416,7 +416,7 @@ export default function LandingPage() {
               <h2 id="start-title" className="mt-4 text-3xl font-bold leading-tight tracking-[-0.045em] text-[#161A18] dark:text-[#FAFBFA] sm:text-4xl">
                 Sebelum ubah harga, tahu dulu biaya sebenarnya.
               </h2>
-              <p className="mt-4 text-base leading-7 text-[#5F6762] dark:text-[#B8C0BB]">Masukkan satu produk yang paling sering kamu jual. Dari sana, kamu bisa melihat alur HPP Pintar dengan data usahamu sendiri.</p>
+              <p className="mt-4 text-base leading-7 text-[#5F6762] dark:text-[#B8C0BB]">Masukkan satu produk yang paling sering kamu jual. Dari sana, kamu bisa melihat alur M0neyku dengan data usahamu sendiri.</p>
             </div>
             <Link href="/register" className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-[#14804A] px-6 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#10673C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#111315]">
               Buat akun
@@ -431,7 +431,7 @@ export default function LandingPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-[#EEF9F2] text-[#14804A] dark:bg-[#10673C33] dark:text-[#B7F5CB]">
                 <CircleHelp className="h-5 w-5" aria-hidden="true" />
               </div>
-              <h2 id="faq-title" className="mt-6 text-3xl font-bold tracking-[-0.04em] text-[#161A18] dark:text-[#FAFBFA]">Pertanyaan dasar tentang HPP Pintar.</h2>
+              <h2 id="faq-title" className="mt-6 text-3xl font-bold tracking-[-0.04em] text-[#161A18] dark:text-[#FAFBFA]">Pertanyaan dasar tentang M0neyku.</h2>
               <p className="mt-4 max-w-sm text-sm leading-6 text-[#737B76] dark:text-[#98A09B]">Kalau baru pertama kali menghitung biaya produk, mulai dari jawaban di sini.</p>
             </div>
             <div className="divide-y divide-[#E8ECE9] border-y border-[#E8ECE9] dark:divide-[#2B312E] dark:border-[#2B312E]">
@@ -454,14 +454,14 @@ export default function LandingPage() {
           <div className="flex items-center gap-2.5">
             <BrandMark />
             <div>
-              <p className="text-sm font-bold text-[#161A18] dark:text-[#FAFBFA]">HPP Pintar</p>
+              <p className="text-sm font-bold text-[#161A18] dark:text-[#FAFBFA]">M0neyku</p>
               <p className="text-xs text-[#737B76] dark:text-[#98A09B]">Hitung biaya produksi dan harga jual per menu.</p>
             </div>
           </div>
           <div className="flex items-center gap-5 text-xs font-medium text-[#737B76] dark:text-[#98A09B]">
             <Link href="/login" className="hover:text-[#14804A]">Masuk</Link>
             <Link href="/register" className="hover:text-[#14804A]">Buat akun</Link>
-            <span>© 2025 HPP Pintar</span>
+            <span>© 2025 M0neyku</span>
           </div>
         </div>
       </footer>

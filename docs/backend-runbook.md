@@ -1,6 +1,6 @@
 # Backend Runbook
 
-Scope: FastAPI backend, PostgreSQL, and Alembic migrations for HPP Pintar.
+Scope: FastAPI backend, PostgreSQL, and Alembic migrations for M0neyku.
 
 Last verified: 2026-08-22. Project task status: FE 20/20 and BE 31/31 completed.
 Security evidence: [`SECURITY-AUDIT.md`](../SECURITY-AUDIT.md).

@@ -1,6 +1,6 @@
-# PRD — HPP Pintar v2.0
+# PRD — M0neyku v2.0
 
-> Dokumen ini adalah sumber kebenaran produk dan arsitektur untuk MVP HPP Pintar.
+> Dokumen ini adalah sumber kebenaran produk dan arsitektur untuk MVP M0neyku.
 > Dokumen lama yang menyebutnya sebagai addendum dianggap sudah digabung ke sini.
 > Implementasi tidak dimulai sebelum acceptance criteria MVP pada dokumen ini terpenuhi.
 >
@@ -17,7 +17,7 @@
 
 ## Tujuan Produk
 
-HPP Pintar membantu pemilik UMKM makanan/minuman menghitung biaya produk secara konsisten
+M0neyku membantu pemilik UMKM makanan/minuman menghitung biaya produk secara konsisten
 dan menetapkan harga jual berbasis margin. MVP berfokus pada perhitungan deterministik yang
 dapat diaudit, bukan menjadi ERP penuh.
 
@@ -89,7 +89,7 @@ dapat diaudit, bukan menjadi ERP penuh.
 # 1. Product Roadmap / ERP Ecosystem
 
 Diagram ini adalah roadmap setelah MVP, bukan daftar fitur yang harus dibangun sekarang.
-HPP Pintar dapat berkembang bertahap menjadi **lightweight ERP untuk UMKM**, tetapi MVP
+M0neyku dapat berkembang bertahap menjadi **lightweight ERP untuk UMKM**, tetapi MVP
 hanya mencakup Core HPP + Pricing pada bagian 0.
 
 ```mermaid
@@ -148,7 +148,7 @@ flowchart TB
 
 # 2. Roadmap Hubungan Antar Modul ERP
 
-Core business loop jangka panjang HPP Pintar:
+Core business loop jangka panjang M0neyku:
 
 ```mermaid
 flowchart LR
@@ -1732,7 +1732,7 @@ Financial domain dependency on AI
 
 # 35. Updated Core Product Architecture
 
-Struktur final HPP Pintar harus mengikuti:
+Struktur final M0neyku harus mengikuti:
 
 ```text
 Presentation
@@ -1770,7 +1770,7 @@ AI boleh bergantung pada Domain.
 Domain tidak boleh bergantung pada AI.
 ```
 
-Dengan struktur tersebut, HPP Pintar MVP dimulai dari:
+Dengan struktur tersebut, M0neyku MVP dimulai dari:
 
 ```text
 HPP + Pricing Core

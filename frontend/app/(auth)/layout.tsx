@@ -29,7 +29,7 @@ export default function AuthLayout({
             </div>
             <div>
               <span className="text-lg font-bold tracking-tight text-white">
-                HPP Pintar
+                M0neyku
               </span>
               <span className="block text-[10px] font-semibold tracking-wider text-emerald-300/80 uppercase">
                 Sistem Kalkulasi UMKM
@@ -117,7 +117,7 @@ export default function AuthLayout({
               </div>
             </div>
             <span className="text-lg font-bold tracking-tight text-[#161A18] dark:text-[#FAFBFA]">
-              HPP Pintar
+              M0neyku
             </span>
           </Link>
         </div>

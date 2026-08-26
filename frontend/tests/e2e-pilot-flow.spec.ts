@@ -1,5 +1,5 @@
 /**
- * Playwright E2E Test Suite — HPP Pintar MVP Flow
+ * Playwright E2E Test Suite — M0neyku MVP Flow
  * Verifies end-to-end user journeys:
  * 1. Auth: Register / Login / Reset Password
  * 2. Catalog: Ingredient management & Direct unit conversion

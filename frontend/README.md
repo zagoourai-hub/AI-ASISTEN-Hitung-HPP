@@ -1,4 +1,4 @@
-# HPP Pintar Frontend
+# M0neyku Frontend
 
 Frontend Next.js App Router untuk MVP Core HPP + Pricing.
 
