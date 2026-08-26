@@ -159,13 +159,13 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 
 `loop-engineering, security-audit, git-workflow, analyze-prd, execute-prd, test-fix-loop, nextjs-python, test-live, ui-clone`
 
-## Status Proyek & Progress Tracking (Updated: 2026-08-25 04:26 WIB)
+## Status Proyek & Progress Tracking (Updated: 2026-08-26)
 
 ### Konfigurasi Khusus Fase
 - Frontend: Next.js 16.3 + Tailwind CSS v4 + TypeScript strict + Lucide Icons.
 - Backend: FastAPI + SQLAlchemy 2.x async + PostgreSQL + Alembic.
 - API Base Path: `/api/v1` with httpOnly cookie authentication forwarding.
-- Project checkpoint: frontend 21/21, backend 31/31, dan integration 5/5 task completed; Docker Compose PostgreSQL/FastAPI live serta Next.js workspace `:3000` sudah diverifikasi.
+- Project checkpoint: 80 total task; 75 completed, 0 in progress, 5 skipped. Frontend 25/25, backend 35/35, dan integration 10/10 completed. AI: 5 completed, 0 in progress, 5 skipped.
 
 ### Phase Status
 - **[FE] Phase 0:** COMPLETED (Environment, Base URL, Error & API Contract Types, Formatters, Feedback Primitives).
@@ -173,11 +173,16 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - **[FE] Phase 2:** COMPLETED (Ingredient Catalog & Conversion Modal, Product & Variant Modal, Recipe Version Modal).
 - **[FE] Phase 3:** COMPLETED (HPP calculation action, Cost breakdown & History view, Price recommendation card, Discount simulation, Semantic error mapping).
 - **[FE] Phase 4:** COMPLETED (MVP Flow Audit, live integration, global toast feedback, real query-driven skeleton, Playwright desktop/mobile evidence, 0 lint/tsc errors, Next.js 16.3 production build passed).
+- **[FE] Phase 5-8:** COMPLETED (product image, ingredient rename/price-history delete, product rename/archive, dan responsive product section).
 - **[BE] Phase 0:** COMPLETED (typed config, API base, database/migration foundation, Decimal policy, error envelope, pagination/tenant skeleton).
 - **[BE] Phase 1:** COMPLETED (auth models, Argon2id/session security, register/login/logout, password reset, ownership guard).
 - **[BE] Phase 2:** COMPLETED (catalog, recipe lifecycle, overhead, tenant CRUD, and archive/integrity guards).
 - **[BE] Phase 3:** COMPLETED (effective price, HPP calculation/history, pricing recommendation, discount simulation, and audit record).
 - **[BE] Phase 4:** COMPLETED (security, edge-case, live PostgreSQL pilot p95, timeout/conflict handling, runbook, structured logging, OpenAPI, and CI verification).
+- **[BE] Phase 5-7:** COMPLETED (local product image storage/API, price-history delete, dan product rename/archive contract regression).
+- **[INT] sampai INT-P5-T001:** COMPLETED (MVP, product image, ingredient/product management, serta product responsive live verification).
+- **[AI] AI-P0-T009:** COMPLETED (chat teks incremental, parser SSE multi-event, deterministic `done`, UI desktop/mobile, error/retry, dan quality gates terverifikasi).
+- **[AI] AI-P0-T010:** COMPLETED (history sesi Zustand, sinkronisasi jawaban streaming, pemulihan item, Chat baru non-destruktif, dan format jawaban modern; Playwright regression lulus).
 
 ### Riwayat Kerja & Perubahan Utama
 - **[FE] Design & Tokens**: Mengikuti `STYLESEED.md` & `DESIGN.md` (forest green palette, tabular-nums, radius 12px/18px, semantic HTML `header`, `nav`, `main`, `section`, `aside`, `table`, `form`).
@@ -197,11 +202,10 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - **[FE] Feedback UI — 2026-08-25**: `ToastProvider` memakai Radix Toast satu-per-satu untuk login/register/logout success/error; viewport toast berada di atas-tengah desktop/mobile. `PageSkeleton` dan `DashboardSkeleton` mengikuti state `isPending` session/products/business tanpa `setTimeout` atau delay loading buatan; reduced-motion dan focus/touch target diperhatikan.
 - **[FE] Live verification — 2026-08-25**: register `201` dan login `200` redirect ke dashboard dengan toast sukses; invalid login menampilkan toast error; screenshot tersimpan di `screenshots/`; successful flow console error `0`. Beberapa GET sempat `ERR_ABORTED` saat route transition lalu retry `200`, bukan kegagalan final API.
 - **[Security Audit]**: `SECURITY-AUDIT.md` berstatus PASS WITH WARNINGS; `boto4`/`reqcrypts` tidak ditemukan pada manifest, lockfile, source, atau environment lokal. `pip-audit` dan OWASP ZAP dilewati karena tool tidak tersedia.
+- **[Post-MVP Product Updates]**: product image lokal, edit bahan/histori harga, edit/archive produk, dan layout Produk responsif telah selesai serta diverifikasi live pada viewport mobile/tablet/desktop.
+- **[AI Chat]**: `AI-P0-T008` sampai `AI-P0-T010` completed. Chat satu kolom memakai snapshot tenant terbaru, plain text incremental, history sesi Zustand maksimal 20 item, selection restore, dan Chat baru non-destruktif; persistence lintas tenant sengaja belum dibuka.
 
 ### Task Selanjutnya (All Layers)
-- **Besok, 2026-08-26 — [FE] UI/product updates:** lanjutkan daftar perubahan UI yang diprioritaskan user; jangan mulai coding sebelum permintaan berikutnya dipecah menjadi row atomic baru pada `docs/PRD.tasks.md`.
-- **Resume rule**: baca `docs/PRD.tasks.md`, cek `UI Feedback Checkpoint`, lalu mulai dari task atomic pertama yang disetujui user. Backend/API/MVP scope tetap tidak berubah sampai diminta.
+- Tidak ada task aktif. Baca `docs/PRD.tasks.md`, lalu tunggu scope/task berikutnya dari user sebelum membuka row baru.
 
-> Untuk file pasangan, salin/symlink isi ini sebagai `CLAUDE.md` bila perlu.
-
-> Untuk file pasangan, salin/symlink isi ini sebagai `CLAUDE.md` bila perlu.
+> File pasangan `CLAUDE.md` wajib byte-identical dengan dokumen ini.

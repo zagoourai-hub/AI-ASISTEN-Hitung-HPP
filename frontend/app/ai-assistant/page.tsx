@@ -1,29 +1,14 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
-import {
-  Plus,
-  Send,
-} from "lucide-react"
-import { Header } from "@/components/header"
-import { Card } from "@/components/ui/card"
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react"
+import { Plus, Send, Square } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { ApiError } from "@/lib/api/client"
 import { streamAIResponse } from "@/lib/api/ai"
 import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
+import { useAppStore, type AIConversation } from "@/lib/store/app-store"
 
 const AI_STREAM_IDLE_TIMEOUT_MS = 30_000
-
-type ChatMessage = {
-  role: "user"
-  content: string
-}
-
-function getLatestUserPrompt(messages: ChatMessage[]): string | null {
-  for (let index = messages.length - 1; index >= 0; index -= 1) {
-    if (messages[index].role === "user") return messages[index].content
-  }
-  return null
-}
 
 function getAIErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -32,13 +17,61 @@ function getAIErrorMessage(error: unknown): string {
   return "AI belum bisa menjawab. Periksa koneksi lalu coba lagi."
 }
 
+function renderInline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={`${part}-${index}`} className="rounded bg-muted px-1.5 py-0.5 text-[0.9em]">{part.slice(1, -1)}</code>
+    }
+    return <span key={`${part}-${index}`}>{part}</span>
+  })
+}
+
+function AssistantText({ content }: { content: string }) {
+  const blocks = content.split(/\n{2,}/)
+  return (
+    <div className="space-y-4">
+      {blocks.map((block, index) => {
+        const lines = block.split("\n")
+        const isCode = lines[0].startsWith("```") && lines.at(-1)?.startsWith("```")
+        if (isCode) {
+          return (
+            <pre key={`${index}-${block.slice(0, 12)}`} className="overflow-x-auto rounded-xl bg-muted p-4 text-sm leading-6">
+              <code>{lines.slice(1, -1).join("\n")}</code>
+            </pre>
+          )
+        }
+        const isBulleted = lines.every((line) => /^[-*] /.test(line))
+        if (isBulleted) {
+          return <ul key={`${index}-${block.slice(0, 12)}`} className="list-disc space-y-2 ps-5">{lines.map((line, lineIndex) => <li key={`${line}-${lineIndex}`}>{renderInline(line.slice(2))}</li>)}</ul>
+        }
+        const isNumbered = lines.every((line) => /^\d+[.)] /.test(line))
+        if (isNumbered) {
+          return <ol key={`${index}-${block.slice(0, 12)}`} className="list-decimal space-y-2 ps-5">{lines.map((line, lineIndex) => <li key={`${line}-${lineIndex}`}>{renderInline(line.replace(/^\d+[.)] /, ""))}</li>)}</ol>
+        }
+        return <p key={`${index}-${block.slice(0, 12)}`}>{renderInline(block.replace(/\n/g, " "))}</p>
+      })}
+    </div>
+  )
+}
+
 export default function AIAssistantPage() {
   const [prompt, setPrompt] = useState("")
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [activeQuestion, setActiveQuestion] = useState("")
   const [answer, setAnswer] = useState("")
   const [isStreaming, setIsStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const aiConversations = useAppStore((state) => state.aiConversations)
+  const activeAIConversationId = useAppStore((state) => state.activeAIConversationId)
+  const addAIConversation = useAppStore((state) => state.addAIConversation)
+  const updateAIConversation = useAppStore((state) => state.updateAIConversation)
+  const selectAIConversation = useAppStore((state) => state.selectAIConversation)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const answerRef = useRef("")
+  const answerEndRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
   const suggestions = [
     "Kenapa HPP naik?",
@@ -46,8 +79,6 @@ export default function AIAssistantPage() {
     "Produk paling menguntungkan",
     "Bahan baku mana yang paling boros?",
   ]
-
-  const latestQuestion = getLatestUserPrompt(messages)
 
   const sendPrompt = async (value: string) => {
     const question = value.trim()
@@ -68,11 +99,16 @@ export default function AIAssistantPage() {
         setIsStreaming(false)
       }, AI_STREAM_IDLE_TIMEOUT_MS)
     }
+
     resetIdleTimeout()
+    const conversationId = activeAIConversationId && activeQuestion === question
+      ? activeAIConversationId
+      : addAIConversation(question)
     setPrompt("")
     setError(null)
+    answerRef.current = ""
     setAnswer("")
-    setMessages([{ role: "user", content: question }])
+    setActiveQuestion(question)
     setIsStreaming(true)
 
     try {
@@ -80,7 +116,9 @@ export default function AIAssistantPage() {
         if (controller.signal.aborted) break
         resetIdleTimeout()
         if (event.type === "token") {
-          setAnswer((current) => current + event.content)
+          answerRef.current += event.content
+          setAnswer(answerRef.current)
+          updateAIConversation(conversationId, answerRef.current)
         }
       }
     } catch (streamError: unknown) {
@@ -103,11 +141,27 @@ export default function AIAssistantPage() {
   const handleNewConversation = () => {
     abortControllerRef.current?.abort()
     abortControllerRef.current = null
-    setMessages([])
+    selectAIConversation(null)
+    setActiveQuestion("")
+    answerRef.current = ""
     setAnswer("")
     setPrompt("")
     setError(null)
     setIsStreaming(false)
+    inputRef.current?.focus()
+  }
+
+  const handleSelectConversation = (conversation: AIConversation) => {
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = null
+    selectAIConversation(conversation.id)
+    setActiveQuestion(conversation.question)
+    answerRef.current = conversation.answer
+    setAnswer(conversation.answer)
+    setPrompt("")
+    setError(null)
+    setIsStreaming(false)
+    inputRef.current?.focus()
   }
 
   const handleCancel = () => {
@@ -116,188 +170,195 @@ export default function AIAssistantPage() {
     setIsStreaming(false)
   }
 
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return
+    event.preventDefault()
+    void sendPrompt(prompt)
+  }
+
+  useEffect(() => {
+    if (answer) answerEndRef.current?.scrollIntoView({ block: "nearest" })
+  }, [answer])
+
   useEffect(() => {
     return () => abortControllerRef.current?.abort()
   }, [])
 
   return (
-    <div className="space-y-6 pb-16">
-      <Header
-        title=""
-        showDemoButton={true}
-        showPeriodSelector={false}
-      />
+    <div className="mx-auto flex min-h-[calc(100dvh-10rem)] max-w-4xl flex-col lg:min-h-[calc(100dvh-4rem)]">
+      <header className="flex items-start justify-between gap-4 border-b border-border pb-5">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            AI Hitung HPP
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Tanya tentang HPP, margin, bahan baku, atau strategi harga dari data bisnis terbarumu.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleNewConversation}
+          disabled={!activeQuestion && !prompt && !answer}
+          className="min-h-11 shrink-0 px-3 sm:px-4"
+        >
+          <Plus aria-hidden="true" />
+          <span className="hidden sm:inline">Chat baru</span>
+          <span className="sr-only sm:hidden">Chat baru</span>
+        </Button>
+      </header>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        {/* Left Col (3 cols): Conversation List */}
-        <aside aria-label="Riwayat Percakapan AI" className="space-y-4 xl:col-span-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#161A18] dark:text-[#FAFBFA]">
-              Percakapan
-            </h2>
-            <button
-              type="button"
-              aria-label="Percakapan Baru"
-              onClick={handleNewConversation}
-              className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#E8ECE9] bg-white text-[#737B76] hover:bg-[#F3F5F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A] dark:border-[#2B312E] dark:bg-[#161A18]"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {latestQuestion ? (
-              <div className="relative rounded-2xl border border-[#DDF5E7] bg-[#EEF9F2] p-3 text-xs dark:border-[#10673C55] dark:bg-[#10673C22]">
-                <div className="flex items-start">
-                  <span className="font-semibold text-[#14804A] dark:text-[#1EA65E]">
-                    {latestQuestion}
-                  </span>
-                </div>
-                <p className="mt-2 text-[11px] text-[#14804A]/80 dark:text-[#86EFAC]">
-                  Percakapan aktif
-                </p>
-              </div>
-            ) : (
-              <p className="rounded-2xl border border-dashed border-[#D5DAD7] p-3 text-xs leading-relaxed text-[#737B76] dark:border-[#2B312E] dark:text-[#98A09B]">
-                Belum ada percakapan.
-              </p>
-            )}
+      {aiConversations.length > 0 && (
+        <aside aria-label="Riwayat percakapan" className="mt-5 border-b border-border pb-5">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Riwayat chat</h2>
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:grid lg:grid-cols-2">
+            {aiConversations.map((conversation) => (
+              <button
+                type="button"
+                key={conversation.id}
+                aria-pressed={conversation.id === activeAIConversationId}
+                onClick={() => handleSelectConversation(conversation)}
+                className="min-w-56 rounded-xl border border-border bg-card px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:border-primary-100 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary-50"
+              >
+                <span className="block truncate font-medium">{conversation.question}</span>
+                <span className="mt-1 block truncate text-xs text-muted-foreground">
+                  {conversation.answer ? "Jawaban tersedia" : "Menunggu jawaban"}
+                </span>
+              </button>
+            ))}
           </div>
         </aside>
+      )}
 
-        <section aria-label="Chat AI" className="space-y-5 xl:col-span-6">
-          <div>
-            <h1 className="text-lg font-bold text-[#161A18] dark:text-[#FAFBFA]">
-              AI Assistant
-            </h1>
-            <p className="mt-1 text-xs text-[#737B76] dark:text-[#98A09B]">
-              Tanyakan HPP, margin, bahan baku, atau strategi harga.
-            </p>
-          </div>
-
-          {messages.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#D5DAD7] p-5 text-sm leading-relaxed text-[#737B76] dark:border-[#2B312E] dark:text-[#98A09B]">
-              Ajukan pertanyaan untuk memulai percakapan.
+      <section
+        aria-label="Percakapan AI Hitung HPP"
+        aria-busy={isStreaming}
+        className="flex flex-1 flex-col py-6 sm:py-8"
+      >
+        {!activeQuestion ? (
+          <div className="my-auto py-8 sm:py-14">
+            <div className="max-w-xl">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Apa yang ingin kamu hitung?
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Pilih contoh pertanyaan atau tulis pertanyaan sendiri. AI memakai data tenant aktif, bukan data demo.
+              </p>
             </div>
-          ) : (
-            <Card className="space-y-5 border-[#DDF5E7] p-4 dark:border-[#10673C55]">
-              <div className="ml-auto max-w-[85%] rounded-2xl bg-[#EEF9F2] px-4 py-3 text-sm leading-relaxed text-[#10673C] dark:bg-[#10673C33] dark:text-[#DDF5E7]">
-                <p className="whitespace-pre-wrap">{latestQuestion}</p>
-              </div>
 
-              <div
-                aria-live="polite"
-                aria-busy={isStreaming}
-                className="max-w-[92%] text-sm leading-7 text-[#161A18] dark:text-[#FAFBFA]"
-              >
-                {answer ? (
-                  <p className="whitespace-pre-wrap">
-                    {answer}
-                    {isStreaming && (
-                      <span
-                        aria-hidden="true"
-                        className="ml-1 inline-block h-4 w-0.5 translate-y-0.5 bg-[#14804A] motion-safe:animate-pulse"
-                      />
-                    )}
-                  </p>
-                ) : isStreaming ? (
-                  <p className="text-[#737B76] dark:text-[#98A09B]">
-                    Mengetik
-                    <span aria-hidden="true" className="motion-safe:animate-pulse">...</span>
-                  </p>
-                ) : null}
-              </div>
-
-              {isStreaming && (
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="min-h-11 rounded-lg border border-[#E8ECE9] px-3 text-xs font-semibold text-[#737B76] hover:bg-[#F3F5F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A] dark:border-[#2B312E] dark:hover:bg-[#232826]"
-                >
-                  Hentikan jawaban
-                </button>
-              )}
-
-              {error && (
-                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#F3C7C7] bg-[#FFF5F5] p-3 text-xs text-[#9B2C2C] dark:border-[#7F1D1D] dark:bg-[#3B1515] dark:text-[#FCA5A5]">
-                  <span>{error}</span>
-                  {latestQuestion && (
-                    <button
-                      type="button"
-                      onClick={() => void sendPrompt(latestQuestion)}
-                      className="min-h-11 rounded-lg border border-current px-3 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A]"
-                    >
-                      Coba lagi
-                    </button>
-                  )}
-                </div>
-              )}
-            </Card>
-          )}
-
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              void sendPrompt(prompt)
-            }}
-            className="relative flex items-center pt-2"
-          >
-            <label htmlFor="ai-prompt" className="sr-only">
-              Pertanyaan untuk AI Assistant
-            </label>
-            <input
-              id="ai-prompt"
-              type="text"
-              placeholder="Tanyakan apa saja tentang HPP bisnismu..."
-              value={prompt}
-              onChange={(event) => setPrompt(event.target.value)}
-              disabled={isStreaming}
-              className="h-12 w-full rounded-2xl border border-[#E8ECE9] bg-white pl-4 pr-12 text-xs text-[#161A18] shadow-xs focus-visible:border-[#14804A] focus-visible:outline-none dark:border-[#2B312E] dark:bg-[#161A18] dark:text-[#FAFBFA]"
-            />
-            <button
-              type="submit"
-              aria-label="Kirim Pesan"
-              disabled={isStreaming || !prompt.trim()}
-              className="absolute right-2 flex h-11 w-11 items-center justify-center rounded-xl bg-[#14804A] text-white transition-colors hover:bg-[#10673C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          </form>
-
-          <div className="space-y-2 pt-1">
-            <p className="text-[11px] font-medium text-[#737B76] dark:text-[#98A09B]">
-              Coba pertanyaan berikut:
-            </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-6 grid gap-2 sm:grid-cols-2" aria-label="Contoh pertanyaan">
               {suggestions.map((suggestion) => (
                 <button
                   type="button"
                   key={suggestion}
-                  onClick={() => setPrompt(suggestion)}
-                  disabled={isStreaming}
-                  className="min-h-11 rounded-full border border-[#DDF5E7] bg-[#EEF9F2] px-3 py-2.5 text-[11px] font-medium text-[#10673C] transition-colors hover:bg-[#DDF5E7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14804A] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#10673C44] dark:bg-[#10673C22] dark:text-[#1EA65E]"
+                  onClick={() => {
+                    setPrompt(suggestion)
+                    inputRef.current?.focus()
+                  }}
+                  className="min-h-11 rounded-xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:border-primary-100 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {suggestion}
                 </button>
               ))}
             </div>
           </div>
-        </section>
+        ) : (
+          <div className="space-y-7">
+            <article aria-label="Pertanyaan kamu" className="flex justify-end">
+              <div className="max-w-[88%] rounded-[18px] rounded-br-md bg-primary-50 px-4 py-3 text-sm leading-6 text-primary-700 sm:max-w-[75%] dark:text-foreground">
+                <p className="whitespace-pre-wrap">{activeQuestion}</p>
+              </div>
+            </article>
 
-        <aside aria-label="Konteks AI" className="space-y-4 xl:col-span-3">
-          <h2 className="text-sm font-bold text-[#161A18] dark:text-[#FAFBFA]">
-            Sumber jawaban
-          </h2>
+            <article aria-label="Jawaban AI" className="max-w-3xl">
+              <p className="mb-3 text-xs font-semibold text-primary">HPP Pintar AI</p>
+              <div aria-live="polite" className="text-base leading-7 text-foreground">
+                {answer ? (
+                  <p className="whitespace-pre-wrap">
+                    <AssistantText content={answer} />
+                    {isStreaming && (
+                      <span
+                        aria-hidden="true"
+                        className="ms-1 inline-block h-5 w-0.5 translate-y-1 bg-primary motion-safe:animate-pulse"
+                      />
+                    )}
+                  </p>
+                ) : isStreaming ? (
+                  <p role="status" className="text-sm text-muted-foreground">
+                    Menyiapkan jawaban dari data bisnis terbaru
+                    <span aria-hidden="true" className="motion-safe:animate-pulse">...</span>
+                  </p>
+                ) : null}
+              </div>
 
-          <Card className="space-y-3 p-4">
-            <p className="text-xs font-semibold text-[#161A18] dark:text-[#FAFBFA]">
-              Database bisnis terbaru
-            </p>
-            <p className="text-xs leading-relaxed text-[#737B76] dark:text-[#98A09B]">
-              Jawaban memakai produk, harga jual, histori HPP, dan harga bahan baku dari bisnismu.
-            </p>
-          </Card>
-        </aside>
+              {error && (
+                <div role="alert" className="mt-5 flex flex-col items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between">
+                  <span>{error}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void sendPrompt(activeQuestion)}
+                    className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                  >
+                    Coba lagi
+                  </Button>
+                </div>
+              )}
+              <div ref={answerEndRef} />
+            </article>
+          </div>
+        )}
+      </section>
+
+      <div className="sticky bottom-20 z-10 bg-background/95 pb-2 pt-3 backdrop-blur-md lg:bottom-0">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            void sendPrompt(prompt)
+          }}
+          className="relative rounded-[18px] border border-border bg-card p-2 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/20"
+        >
+          <label htmlFor="ai-prompt" className="sr-only">
+            Pertanyaan untuk AI Hitung HPP
+          </label>
+          <textarea
+            ref={inputRef}
+            id="ai-prompt"
+            rows={2}
+            placeholder="Tanyakan apa saja tentang HPP bisnismu"
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            onKeyDown={handleComposerKeyDown}
+            disabled={isStreaming}
+            aria-describedby="ai-prompt-help"
+            className="min-h-14 max-h-40 w-full resize-none bg-transparent px-3 py-2 pe-14 text-sm leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          />
+          {isStreaming ? (
+            <button
+              type="button"
+              aria-label="Hentikan jawaban"
+              onClick={handleCancel}
+              className="absolute bottom-3 end-3 flex size-11 items-center justify-center rounded-xl bg-foreground text-background transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <Square aria-hidden="true" className="size-4 fill-current" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              aria-label="Kirim pertanyaan"
+              disabled={!prompt.trim()}
+              className="absolute bottom-3 end-3 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Send aria-hidden="true" className="size-4" />
+            </button>
+          )}
+        </form>
+        <div id="ai-prompt-help" className="mt-2 flex items-center justify-between gap-3 px-1 text-xs text-muted-foreground">
+          <span>Enter untuk kirim, Shift+Enter untuk baris baru.</span>
+          <span className="hidden text-right sm:inline">Sumber: database bisnis terbaru</span>
+        </div>
       </div>
     </div>
   )

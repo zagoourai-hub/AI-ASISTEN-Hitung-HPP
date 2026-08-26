@@ -2,7 +2,7 @@
 
 Source PRD: `PRD.md`
 Profile/Stack: Next.js + TypeScript, FastAPI + Python, PostgreSQL, OpenAPI
-Last Updated: 2026-08-25
+Last Updated: 2026-08-26
 
 ## Scope Lock
 
@@ -11,18 +11,18 @@ Last Updated: 2026-08-25
 - One user owns one business; currency MVP IDR.
 - HPP uses the latest effective ingredient price and backend Decimal arithmetic.
 - Inventory, POS, finance, reporting, competitor pricing, dan delivery fee remain post-MVP.
-- AI Assistant integration dibuka sebagai scope post-MVP terpisah pada 2026-08-25 dengan OpenRouter structured output.
-- Frontend Phase 0-4 dan Backend Phase 0-4 sudah selesai; handoff frontend dari agent terpisah tercatat pada task rows dan bukti verifikasinya dipertahankan.
+- AI Assistant integration adalah scope post-MVP terpisah. Kontrak aktif memakai chat teks streaming incremental; structured analyst UI dihentikan.
+- Frontend Phase 0-8, Backend Phase 0-7, dan Integration sampai `INT-P5-T001` selesai; bukti verifikasi dipertahankan pada task rows dan checkpoint.
 
 ## Summary
 
-- Total: 79
+- Total: 80
 - Frontend: 25 (25 completed, 0 in progress, 0 pending)
 - Backend: 35 (35 completed, 0 in progress, 0 pending)
 - Integration: 10 (10 completed, 0 in progress, 0 pending, 0 blocked)
-- AI: 9 (3 completed, 1 in progress, 0 blocked, 0 pending, 5 skipped)
-- Completed: 73
-- In Progress: 1
+- AI: 10 (5 completed, 0 in progress, 0 blocked, 0 pending, 5 skipped)
+- Completed: 75
+- In Progress: 0
 - Pending: 0
 - Blocked: 0
 - Skipped: 5
@@ -98,6 +98,20 @@ Last Updated: 2026-08-25
 - Modal `Edit & Hapus Produk` terbuka dan tetap berada dalam viewport pada 390, 768, dan 1440; current-tab console errors `0`.
 - Evidence: `screenshots/products-responsive-mobile-390x844.png`, `screenshots/products-responsive-tablet-768x900.png`, `screenshots/products-responsive-desktop-1440x900.png`, dan `screenshots/products-responsive-modal-mobile-390x844.png`.
 - Build frontend dan route generation `14/14` passed. Route transition masih dapat mencatat GET `ERR_ABORTED` sementara, lalu retry `200`.
+
+## AI Chat Hitung HPP UI Checkpoint — 2026-08-26
+
+- `AI-P0-T009` completed: UI menjadi chat satu kolom terfokus dengan empty suggestions, pertanyaan aktif, jawaban plain text incremental, composer sticky, typing cursor, cancel/retry, rolling idle timeout, serta state error yang memulihkan input.
+- Root cause macet diperbaiki pada parser SSE bersama: buffer kini dikonsumsi dari state terbaru ketika beberapa event berada dalam satu network chunk, dan generator berhenti segera saat event `done` tanpa menunggu HTTP EOF.
+- Live OpenRouter pada Chrome mobile 390x844 selesai 8,2 detik dengan 6 pertumbuhan teks parsial, HTTP 200, tenant terbaru benar, console error 0, dan tanpa horizontal overflow. Pembatalan request setelah `done` serta request route lama saat navigasi telah diperiksa sebagai `ERR_ABORTED` terkontrol.
+- Regression: combined `token` + `done` satu chunk selesai 96 ms; mock socket yang ditahan setelah `done` selesai 201 ms; network error menampilkan retry dan mengaktifkan kembali input; frontend lint/typecheck/build 14/14, backend AI pytest 9/9, Ruff, Pyright 0 errors, dependency scan `SAFE_NO_KNOWN_IOC`, dan `git diff --check` passed.
+- Visual/accessibility review lulus pada desktop 1440x900 dan mobile 390x844; semantic article/form/label, keyboard Enter/Shift+Enter, focus-visible, touch target, live region, dan reduced-motion dipertahankan. StyleSeed code score: 88/100.
+- Evidence: `screenshots/ai-chat-empty-desktop-1440x900.png`, `screenshots/ai-chat-response-desktop-1440x900.png`, `screenshots/ai-chat-empty-mobile-390x844.png`, `screenshots/ai-chat-streaming-mobile-390x844.png`, dan `screenshots/ai-chat-response-mobile-390x844.png`.
+
+## AI Chat History Checkpoint — 2026-08-27
+
+- `AI-P0-T010` completed: history percakapan sesi berbasis Zustand menampilkan daftar pertanyaan, menyinkronkan jawaban streaming, memulihkan item terpilih, dan mempertahankan item saat Chat baru dibuat. Jawaban kini tampil seperti chat modern dengan paragraf, bold, list, inline code, dan code block React yang aman. State sengaja in-memory agar tidak bocor lintas tenant; persistence database/localStorage belum dibuka.
+- Playwright membuktikan dua percakapan tersimpan, Chat baru mempertahankan item pertama, item pertama memulihkan jawaban, tanpa overflow horizontal. Lint/typecheck dan `git diff --check` passed; warning React pada test awal sudah diperbaiki dengan `answerRef` dan tidak muncul pada regression ulang.
 
 ## Phase Gates
 
@@ -197,7 +211,8 @@ Stack: FastAPI + `httpx` + OpenRouter Chat Completions SSE + Next.js client stre
 | AI-P0-T006 | Post-MVP | AI/FE | skipped | Ganti skeleton loading AI dengan vertical process timeline yang melacak tahap persiapan konteks, analisis, dan penyusunan rekomendasi sampai response selesai/error | AI-P0-T002 | Dihentikan oleh keputusan user 2026-08-25 | Timeline dan icon proses dihapus karena menambah persepsi lag/stuck |
 | AI-P0-T007 | Post-MVP | AI/FE | skipped | Hentikan loading AI secara deterministik saat SSE provider idle/terputus; tampilkan error retryable dan cegah request lama mengunci input | AI-P0-T002, AI-P0-T006 | Diserap AI-P0-T009 | Fixed total timeout diganti rolling idle timeout yang reset setiap chunk |
 | AI-P0-T008 | Post-MVP | AI/FE/BE | completed | Cegah jawaban lama/tidak relevan dengan snapshot data tenant terbaru per request, cache bypass, stale-response guard, dan penghapusan konteks demo hardcoded | AI-P0-T001, AI-P0-T002 | AI pytest 9/9, Ruff, Pyright 0 errors, frontend lint/typecheck/build 14/14, backend container healthy; live authenticated SSE tenant baru memuat nama bisnis snapshot terbaru, `analysis`, `done`, dan `no-store`; tenant uji dihapus | Request hanya menyimpan pertanyaan aktif; snapshot DB tenant dibatasi 20 row per kelompok; konteks/percakapan demo lama dihapus |
-| AI-P0-T009 | Post-MVP | AI/FE/BE | in_progress | Ganti structured analyst/timeline menjadi chat teks streaming incremental seperti ChatGPT dengan typing cursor, rolling idle timeout, cancel/retry, dan jawaban teks rapi | AI-P0-T008 | Pending: backend/frontend regression, live partial-token proof, desktop/mobile, console/network, screenshot | Tanpa dependency baru; snapshot DB tenant dan SSE security tetap dipertahankan |
+| AI-P0-T009 | Post-MVP | AI/FE/BE | completed | Perbaiki UI section AI Chat Hitung HPP dan ganti structured analyst/timeline menjadi chat teks streaming incremental seperti ChatGPT dengan typing cursor, rolling idle timeout, cancel/retry, dan jawaban teks rapi | AI-P0-T008 | Frontend lint/typecheck/build 14/14; backend AI pytest 9/9, Ruff, Pyright 0 errors; live OpenRouter mobile 390x844 HTTP 200, 6 partial updates, selesai 8,2 detik, tenant benar, console 0, no overflow; combined-event regression 96 ms; held-socket-after-done 201 ms; error/retry passed; desktop/mobile screenshots; StyleSeed 88/100 | Tanpa dependency baru; parser SSE mengonsumsi buffer terbaru dan berhenti pada `done`; snapshot DB tenant serta SSE security dipertahankan; test tenant dihapus |
+| AI-P0-T010 | Post-MVP | AI/FE | completed | Tambahkan history chat sesi berbasis Zustand: daftar percakapan, pemulihan item, sinkronisasi jawaban streaming, dan Chat baru tanpa menghapus history | AI-P0-T009 | Playwright: 2 history items, Chat baru mempertahankan item pertama, selection memulihkan jawaban, no overflow; lint/typecheck dan `git diff --check` passed | In-memory session state sengaja dipilih; maksimal 20 item; persistence database/localStorage belum dibuka |
 
 ## [INT] Frontend–Backend Integration Tasks
 

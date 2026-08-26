@@ -103,13 +103,16 @@ export async function* streamAIResponse(
       const { done, value } = await reader.read()
       buffer += decoder.decode(value, { stream: !done })
 
-      const normalized = buffer.replace(/\r\n/g, "\n")
-      let separatorIndex = normalized.indexOf("\n\n")
+      buffer = buffer.replace(/\r\n/g, "\n")
+      let separatorIndex = buffer.indexOf("\n\n")
       while (separatorIndex >= 0) {
-        const block = normalized.slice(0, separatorIndex)
-        buffer = normalized.slice(separatorIndex + 2)
+        const block = buffer.slice(0, separatorIndex)
+        buffer = buffer.slice(separatorIndex + 2)
         const event = parseEvent(block)
-        if (event) yield event
+        if (event) {
+          yield event
+          if (event.type === "done") return
+        }
         separatorIndex = buffer.indexOf("\n\n")
       }
 
@@ -120,6 +123,7 @@ export async function* streamAIResponse(
       }
     }
   } finally {
+    void reader.cancel().catch(() => undefined)
     reader.releaseLock()
   }
 }

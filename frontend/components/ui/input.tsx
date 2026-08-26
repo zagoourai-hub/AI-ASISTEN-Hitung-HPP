@@ -26,7 +26,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {suffixNode && (
-          <div className="absolute right-3.5 text-xs font-medium text-[#737B76] pointer-events-none select-none">
+          <div className="pointer-events-none absolute right-3.5 text-xs font-medium text-[#737B76] select-none has-[button]:pointer-events-auto">
             {suffixNode}
           </div>
         )}

@@ -63,5 +63,5 @@
 - No meaningless gradients or rainbow glows.
 - No cartoonish 3D AI blobs or robotic icons.
 - All numbers and metrics must be realistic, deterministic, and verifiable.
-- AI Assistant output must be formatted in structured analyst cards (Ringkasan, Metrik, Status, Rekomendasi), never raw rambling walls of text.
+- AI Assistant uses one focused chat column: compact user bubble, readable plain-text answer, persistent composer, and clear streaming/error controls. Do not restore analyst cards, timelines, fake conversation history, or decorative chatbot UI.
 - High contrast, semantic HTML, keyboard accessible (`button`, `a`, `main`, `nav`, `aside`, `header`, `table`).
