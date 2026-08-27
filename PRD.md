@@ -60,7 +60,8 @@ dapat diaudit, bukan menjadi ERP penuh.
 
 - Inventory, purchasing, supplier, stock movement, waste, dan production batch.
 - POS, sales, payment, refund, dan reversal.
-- Finance, income, expense, cashflow, profit/loss, dan reporting kompleks.
+- Finance, income, expense, cashflow, profit/loss, dan reporting kompleks pada MVP Core.
+  Cash Tracking manual didefinisikan sebagai fase post-MVP terpisah pada section 4.6.
 - Competitor pricing dan delivery fee simulation.
 - AI assistant, OpenRouter, AI streaming, prompt orchestration, dan AI usage billing.
 - OAuth, multi-business, team member, invitation, subscription, payment, dan invoicing.
@@ -643,6 +644,99 @@ Detail error internal, credential, dan provider information tidak boleh keluar k
 
 ---
 
+# 4.6. Post-MVP Cash Tracking — Manual
+
+Cash Tracking v1 menambahkan pencatatan kas manual ke dashboard tanpa koneksi langsung
+ke ATM, rekening bank, e-wallet, payment gateway, POS, atau sumber transaksi eksternal.
+Fitur ini memperluas PRD lama tanpa mengubah otoritas HPP dan Pricing.
+
+## Tujuan dan Scope
+
+- User dapat mengisi dan mengedit satu saldo awal manual untuk business aktif.
+- User dapat mencatat pemasukan dan pengeluaran secara manual.
+- Dashboard menampilkan saldo awal, total pemasukan, total pengeluaran, arus kas bersih,
+  dan saldo akhir pada periode aktif; default periode adalah bulan kalender berjalan.
+- User dapat mengedit atau menghapus transaksi manual dengan konfirmasi.
+- Kategori dan catatan transaksi bersifat opsional dan berupa teks.
+
+## Entity dan Aturan Bisnis
+
+Entity `CASH_BALANCE` memiliki satu record per business:
+
+```text
+id, business_id, opening_balance, updated_at
+```
+
+Entity `CASH_TRANSACTION` memakai satu tabel untuk dua jenis transaksi:
+
+```text
+id, business_id, type, amount, category, note,
+transaction_date, created_at, updated_at
+```
+
+Aturan:
+
+- `type` hanya `INCOME` atau `EXPENSE`.
+- `amount` adalah nominal IDR positif; `opening_balance` adalah nominal IDR non-negatif.
+- Saldo manual tidak diverifikasi terhadap saldo ATM, bank, atau e-wallet.
+- Formula authoritative untuk periode aktif:
+
+  ```text
+  net_cashflow = total_income - total_expense
+  closing_balance = opening_balance + net_cashflow
+  ```
+
+- Semua entity wajib memakai business dari session aktif; `business_id` dari client tidak
+  menjadi sumber authorization.
+- Create, update, dan delete transaksi serta perubahan saldo dicatat pada audit log.
+- Delete transaksi adalah hard delete terkontrol karena transaksi ini bukan sumber histori
+  HPP; perubahan tetap memerlukan konfirmasi dan audit log.
+
+## API Contract
+
+Base path tetap `/api/v1`; seluruh nilai uang memakai decimal string.
+
+| Domain | Method | Path | Auth | Tujuan |
+|---|---|---|---|---|
+| Cash balance | GET/PATCH | `/cash-balance` | Protected | Membaca atau mengubah saldo awal manual business aktif |
+| Cash transactions | GET/POST | `/cash-transactions` | Protected | List berpaginasi atau membuat transaksi |
+| Cash transactions | PATCH/DELETE | `/cash-transactions/{cashTransactionId}` | Protected | Mengubah atau menghapus transaksi |
+| Cash summary | GET | `/cash-transactions/summary` | Protected | Mengambil ringkasan periode aktif |
+
+`GET /cash-transactions` mendukung `page`, `page_size`, `type`, `date_from`, dan `date_to`.
+`GET /cash-transactions/summary` mengembalikan `openingBalance`, `totalIncome`,
+`totalExpense`, `netCashflow`, `closingBalance`, `dateFrom`, dan `dateTo`.
+
+## Dashboard UX
+
+- Tambahkan section `Catatan Kas` pada dashboard existing; tidak membuat navigasi atau
+  halaman finance baru pada v1.
+- Sediakan aksi `Atur Saldo Awal`, `Tambah Pemasukan`, dan `Tambah Pengeluaran`.
+- Tampilkan daftar transaksi terbaru dengan tipe, nominal, kategori/catatan, tanggal,
+  serta aksi edit dan hapus.
+- Reuse `apiClient`, TanStack Query, React Hook Form, formatter IDR, Card, Input, toast,
+  loading, empty, error, focus, dan responsive primitives yang sudah ada.
+- UI tidak boleh menyebut saldo rekening aktual atau menampilkan koneksi ATM/bank.
+
+## Acceptance Criteria
+
+1. User dapat mengisi saldo awal manual dan mengeditnya tanpa menghapus transaksi.
+2. User dapat membuat pemasukan atau pengeluaran dengan nominal IDR positif.
+3. User dapat mengedit dan menghapus transaksi dengan konfirmasi.
+4. Dashboard menghitung `closing_balance = opening_balance + income - expense`.
+5. Summary dan daftar transaksi berubah setelah setiap create, update, atau delete.
+6. Tenant isolation, Decimal arithmetic, pagination, semantic error, audit log, dan
+   migration mengikuti aturan MVP yang sudah ada.
+7. Loading, empty, error, success, disabled, focus, keyboard, mobile responsive, dan
+   reduced-motion state tersedia pada flow Cash Tracking.
+
+## Out of Scope Cash Tracking v1
+
+ATM/bank/e-wallet integration, saldo otomatis, rekening atau akun kas terpisah, saldo awal
+per rekening, rekonsiliasi, POS, inventory, supplier, payment gateway, invoice, profit/loss,
+dan laporan keuangan kompleks.
+
+
 # 5. ERD Future ERP
 
 Untuk fase Finance + Inventory + POS:
@@ -675,6 +769,8 @@ erDiagram
     BUSINESS ||--o{ INCOME : records
 
     BUSINESS ||--o{ CASH_TRANSACTION : records
+
+    BUSINESS ||--|| CASH_BALANCE : configures
 
     BUSINESS ||--o{ PRODUCTION_BATCH : produces
 

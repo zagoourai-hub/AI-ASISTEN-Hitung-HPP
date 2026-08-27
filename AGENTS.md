@@ -159,13 +159,13 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 
 `loop-engineering, security-audit, git-workflow, analyze-prd, execute-prd, test-fix-loop, nextjs-python, test-live, ui-clone`
 
-## Status Proyek & Progress Tracking (Updated: 2026-08-26)
+## Status Proyek & Progress Tracking (Updated: 2026-08-27)
 
 ### Konfigurasi Khusus Fase
 - Frontend: Next.js 16.3 + Tailwind CSS v4 + TypeScript strict + Lucide Icons.
 - Backend: FastAPI + SQLAlchemy 2.x async + PostgreSQL + Alembic.
 - API Base Path: `/api/v1` with httpOnly cookie authentication forwarding.
-- Project checkpoint: 80 total task; 75 completed, 0 in progress, 5 skipped. Frontend 25/25, backend 35/35, dan integration 10/10 completed. AI: 5 completed, 0 in progress, 5 skipped.
+- Project checkpoint: 86 total task; 75 completed, 0 in progress, 6 pending, 5 skipped. Frontend 25/28, backend 35/37, dan integration 10/11 completed with Cash Tracking pending. AI: 5 completed, 0 in progress, 5 skipped.
 
 ### Phase Status
 - **[FE] Phase 0:** COMPLETED (Environment, Base URL, Error & API Contract Types, Formatters, Feedback Primitives).
@@ -181,6 +181,9 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - **[BE] Phase 4:** COMPLETED (security, edge-case, live PostgreSQL pilot p95, timeout/conflict handling, runbook, structured logging, OpenAPI, and CI verification).
 - **[BE] Phase 5-7:** COMPLETED (local product image storage/API, price-history delete, dan product rename/archive contract regression).
 - **[INT] sampai INT-P5-T001:** COMPLETED (MVP, product image, ingredient/product management, serta product responsive live verification).
+- **[FE] Phase 9:** PENDING (Cash Tracking dashboard: saldo awal manual, pemasukan, pengeluaran, edit/delete, dan ringkasan saldo).
+- **[BE] Phase 8:** PENDING (CashBalance/CashTransaction, migration, tenant-scoped CRUD, dan period summary).
+- **[INT] INT-P6-T001:** PENDING (Cash Tracking live integration dan responsive verification).
 - **[AI] AI-P0-T009:** COMPLETED (chat teks incremental, parser SSE multi-event, deterministic `done`, UI desktop/mobile, error/retry, dan quality gates terverifikasi).
 - **[AI] AI-P0-T010:** COMPLETED (history sesi Zustand, sinkronisasi jawaban streaming, pemulihan item, Chat baru non-destruktif, dan format jawaban modern; Playwright regression lulus).
 
@@ -204,8 +207,9 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - **[Security Audit]**: `SECURITY-AUDIT.md` berstatus PASS WITH WARNINGS; `boto4`/`reqcrypts` tidak ditemukan pada manifest, lockfile, source, atau environment lokal. `pip-audit` dan OWASP ZAP dilewati karena tool tidak tersedia.
 - **[Post-MVP Product Updates]**: product image lokal, edit bahan/histori harga, edit/archive produk, dan layout Produk responsif telah selesai serta diverifikasi live pada viewport mobile/tablet/desktop.
 - **[AI Chat]**: `AI-P0-T008` sampai `AI-P0-T010` completed. Chat satu kolom memakai snapshot tenant terbaru, plain text incremental, history sesi Zustand maksimal 20 item, selection restore, dan Chat baru non-destruktif; persistence lintas tenant sengaja belum dibuka.
+- **[Finance — Cash Tracking]**: PRD section 4.6 dan enam task pending dibuka untuk saldo awal manual editable serta transaksi `INCOME`/`EXPENSE`. Scope tidak terhubung ke ATM, bank, e-wallet, POS, inventory, atau rekonsiliasi.
 
 ### Task Selanjutnya (All Layers)
-- Tidak ada task aktif. Baca `docs/PRD.tasks.md`, lalu tunggu scope/task berikutnya dari user sebelum membuka row baru.
+- Cash Tracking belum dieksekusi. Saat user memberi instruksi eksekusi, mulai dari `BE-P8-T001`, lanjut `BE-P8-T002`, `FE-P9-T001` sampai `FE-P9-T003`, lalu `INT-P6-T001`; tetap satu task aktif dan update tracker setelah verifikasi.
 
 > File pasangan `CLAUDE.md` wajib byte-identical dengan dokumen ini.

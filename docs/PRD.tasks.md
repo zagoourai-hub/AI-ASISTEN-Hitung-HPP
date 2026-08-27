@@ -2,7 +2,7 @@
 
 Source PRD: `PRD.md`
 Profile/Stack: Next.js + TypeScript, FastAPI + Python, PostgreSQL, OpenAPI
-Last Updated: 2026-08-26
+Last Updated: 2026-08-27
 
 ## Scope Lock
 
@@ -10,20 +10,23 @@ Last Updated: 2026-08-26
 - Repository boundary: `frontend/` dan `backend/`.
 - One user owns one business; currency MVP IDR.
 - HPP uses the latest effective ingredient price and backend Decimal arithmetic.
-- Inventory, POS, finance, reporting, competitor pricing, dan delivery fee remain post-MVP.
+- Inventory, POS, reporting, competitor pricing, dan delivery fee remain post-MVP.
+- Cash Tracking manual dibuka sebagai fase post-MVP baru: saldo awal editable, pemasukan,
+  pengeluaran, dan summary saldo dashboard; tidak terhubung ke ATM/bank/e-wallet.
 - AI Assistant integration adalah scope post-MVP terpisah. Kontrak aktif memakai chat teks streaming incremental; structured analyst UI dihentikan.
-- Frontend Phase 0-8, Backend Phase 0-7, dan Integration sampai `INT-P5-T001` selesai; bukti verifikasi dipertahankan pada task rows dan checkpoint.
+- Frontend Phase 0-8, Backend Phase 0-7, dan Integration sampai `INT-P5-T001` selesai.
+  Cash Tracking rows baru masih `pending`; bukti verifikasi dipertahankan pada task rows dan checkpoint.
 
 ## Summary
 
-- Total: 80
-- Frontend: 25 (25 completed, 0 in progress, 0 pending)
-- Backend: 35 (35 completed, 0 in progress, 0 pending)
-- Integration: 10 (10 completed, 0 in progress, 0 pending, 0 blocked)
+- Total: 86
+- Frontend: 28 (25 completed, 0 in progress, 3 pending)
+- Backend: 37 (35 completed, 0 in progress, 2 pending)
+- Integration: 11 (10 completed, 0 in progress, 1 pending, 0 blocked)
 - AI: 10 (5 completed, 0 in progress, 0 blocked, 0 pending, 5 skipped)
 - Completed: 75
 - In Progress: 0
-- Pending: 0
+- Pending: 6
 - Blocked: 0
 - Skipped: 5
 
@@ -113,6 +116,17 @@ Last Updated: 2026-08-26
 - `AI-P0-T010` completed: history percakapan sesi berbasis Zustand menampilkan daftar pertanyaan, menyinkronkan jawaban streaming, memulihkan item terpilih, dan mempertahankan item saat Chat baru dibuat. Jawaban kini tampil seperti chat modern dengan paragraf, bold, list, inline code, dan code block React yang aman. State sengaja in-memory agar tidak bocor lintas tenant; persistence database/localStorage belum dibuka.
 - Playwright membuktikan dua percakapan tersimpan, Chat baru mempertahankan item pertama, item pertama memulihkan jawaban, tanpa overflow horizontal. Lint/typecheck dan `git diff --check` passed; warning React pada test awal sudah diperbaiki dengan `answerRef` dan tidak muncul pada regression ulang.
 
+## Cash Tracking Scope — 2026-08-27
+
+- User menyetujui Cash Tracking manual sebagai integrasi post-MVP dengan PRD lama.
+- Scope: satu saldo awal manual per business yang dapat diedit, satu entity transaksi dengan
+  tipe `INCOME`/`EXPENSE`, nominal IDR positif, kategori/catatan teks opsional, edit, delete,
+  dan ringkasan dashboard.
+- Formula: `closing_balance = opening_balance + total_income - total_expense` pada periode aktif;
+  default periode adalah bulan kalender berjalan.
+- Tidak ada koneksi ATM, bank, e-wallet, POS, inventory, rekening kas, rekonsiliasi, atau
+  profit/loss. Tidak ada kode yang dieksekusi pada checkpoint ini.
+
 ## Phase Gates
 
 | Phase | Gate | Dependencies | Verification |
@@ -122,6 +136,7 @@ Last Updated: 2026-08-26
 | Phase 2 | Catalog dan recipe version dapat dikelola | Phase 1 | CRUD tests; recipe activation/integrity tests |
 | Phase 3 | HPP dan pricing deterministik | Phase 2 | Golden calculation tests; API contract tests; decimal assertions |
 | Phase 4 | MVP siap pilot | Phase 3 | Typecheck, lint, build, E2E, accessibility, performance, security checks |
+| Phase 5 | Cash Tracking manual siap diintegrasikan | Phase 4 dan section 4.6 PRD | Migration/API tests, tenant isolation, frontend quality gates, dan Playwright dashboard desktop/mobile |
 
 ## [FE] Frontend Tasks
 
@@ -154,6 +169,9 @@ Stack: Next.js App Router + TypeScript strict
 | FE-P6-T001 | Phase 6 | FE | completed | Tambahkan action edit nama bahan baku, detail histori harga, delete histori dengan confirm, invalidation, dan responsive state | FE-P2-T001, BE-P6-T001 | `npm run lint`, `tsc --noEmit`, `npm run build`, `git diff --check`, dan Playwright desktop/mobile passed; rename/delete live flow verified | Evidence in `screenshots/ingredients-edit-history-*.png`; fokus UI pada rename dan delete satu price-history row |
 | FE-P7-T001 | Phase 7 | FE | completed | Tambahkan action edit nama dan hapus/archive produk dari daftar Produk dengan confirm, invalidation, feedback, dan responsive state | FE-P2-T003, BE-P7-T001 | `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, dan Playwright desktop/mobile passed; live PATCH/DELETE/refetch verified | Hapus memakai archive agar resep dan histori HPP tetap aman |
 | FE-P8-T001 | Phase 8 | FE | completed | Rapikan section Produk untuk mobile, tablet, dan desktop dengan product card responsive, tabel desktop, toolbar spacing, dan semantic table headers | FE-P7-T001 | `npm run lint`, `npx tsc --noEmit`, `npm run build`, `git diff --check`, serta screenshot Chrome 390/768/1440 passed | Breakpoint `<xl` mengutamakan scanability dan action visibility; `xl+` mempertahankan katalog tabel |
+| FE-P9-T001 | Phase 9 | FE | pending | Tambahkan form atur dan edit saldo awal manual pada dashboard dengan validasi IDR non-negatif, feedback, dan query invalidation | FE-P4-T004, BE-P8-T001 | Pending implementation; wajib typecheck, lint, dan form keyboard/accessibility check | Saldo manual tidak terhubung ke ATM, bank, atau e-wallet |
+| FE-P9-T002 | Phase 9 | FE | pending | Tambahkan form pemasukan/pengeluaran, edit, delete confirmation, kategori/catatan opsional, dan feedback memakai primitive existing | FE-P9-T001, BE-P8-T001 | Pending implementation; wajib typecheck, lint, validation, mutation feedback, dan responsive check | Satu entity transaksi dengan tipe `INCOME`/`EXPENSE`; tanpa dependency baru |
+| FE-P9-T003 | Phase 9 | FE | pending | Tambahkan section `Catatan Kas` pada dashboard dengan filter periode, saldo awal, total income, total expense, net cashflow, closing balance, dan daftar transaksi terbaru | FE-P9-T002, BE-P8-T001 | Pending implementation; wajib typecheck, lint, build, semantic HTML, no-overflow, loading/empty/error/success states | Reuse Card, formatter IDR, TanStack Query, toast, dan dashboard layout existing |
 
 ## [BE] Backend Tasks
 
@@ -196,6 +214,8 @@ Stack: FastAPI + Python typed, SQLAlchemy 2.x async, Alembic, PostgreSQL
 | BE-P5-T002 | Phase 5 | BE | completed | Implementasikan upload/delete/serve image API dengan auth tenant scope, size/MIME/signature validation, random filename, dan sanitized error | BE-P5-T001, BE-P1-T007 | Storage tests untuk signature/size/path passed; live PUT/GET/DELETE image `200/200/204`; payload signature palsu live `422`; cache-busting version image verified | Allowlist JPG/PNG/WebP, maksimal 5 MB, SVG ditolak |
 | BE-P6-T001 | Phase 6 | BE | completed | Tambahkan delete price-history API/service/repository dengan tenant guard, recompute current cache, not-found handling, dan regression tests; pertahankan PATCH rename existing | BE-P2-T005, BE-P3-T001, BE-P4-T004 | Full pytest passed; Ruff check/format passed; Pyright 0 errors; OpenAPI delete path and current-cache recomputation regression verified | Hard delete hanya untuk histori harga yang dipilih; HPP tetap menolak bila tidak ada effective price |
 | BE-P7-T001 | Phase 7 | BE | completed | Konfirmasi dan regression-check kontrak PATCH rename serta DELETE archive produk dengan tenant guard | BE-P2-T006, BE-P4-T002 | Existing `ProductService.update_product` dan `archive_product`, route OpenAPI, tenant-scoped repository, dan archive regression test sudah tersedia; tidak perlu migration | DELETE produk adalah archive terkontrol, bukan hard delete |
+| BE-P8-T001 | Phase 8 | BE | pending | Buat `CashBalance` one-to-one per business dan `CashTransaction` dengan migration Alembic, schema, repository, service, CRUD API, tenant guard, dan period summary | BE-P4-T004, BE-P1-T007 | Pending implementation; wajib migration offline upgrade/downgrade, OpenAPI, Decimal validation, API contract, dan tenant tests | `INCOME`/`EXPENSE`; opening balance non-negative; closing balance = opening balance + income - expense; tidak ada integrasi eksternal |
+| BE-P8-T002 | Phase 8 | BE | pending | Tambahkan domain/security regression tests untuk saldo manual, transaksi, summary, pagination, edit/delete, audit log, dan cross-business isolation | BE-P8-T001 | Pending implementation; wajib pytest, Ruff, Pyright, semantic error, constraint, dan migration verification | Hard delete transaksi manual terkontrol; HPP history tidak bergantung pada transaksi kas |
 
 ## [AI] OpenRouter Integration Tasks
 
@@ -230,6 +250,7 @@ Stack: Next.js App Router + TypeScript strict + React Hook Form + TanStack Query
 | INT-P3-T001 | Integration | FE/BE | completed | Verifikasi live rename ingredient dan delete price history di Chrome desktop/mobile dengan network, console, persistence, dan screenshot evidence | FE-P6-T001, BE-P6-T001 | Live `POST 201` fixture, `PATCH 200`, price-history `DELETE 204`, refetch `GET 200`, refresh persistence, mobile no-overflow, console errors `0`, dan screenshots passed | Test ingredient diarsipkan setelah verifikasi; route-transition GET `ERR_ABORTED` retry `200` |
 | INT-P4-T001 | Integration | FE/BE | completed | Verifikasi live edit nama dan archive produk di Chrome desktop/mobile dengan network, console, persistence, dan screenshot evidence | FE-P7-T001, BE-P7-T001 | Live `PATCH 200`, archive `DELETE 204`, refetch `GET 200`, refresh persistence, mobile no-overflow, console errors `0`, dan screenshots passed | Test product diarsipkan setelah verifikasi; route-transition GET `ERR_ABORTED` retry `200` |
 | INT-P5-T001 | Integration | FE/BE | completed | Verifikasi responsive section Produk di Chrome mobile, tablet, dan desktop termasuk action modal, overflow, console, dan screenshot evidence | FE-P8-T001, BE-P7-T001 | Live 390x844, 768x900, 1024x900, 1440x900; modal dialog bounds valid; page no-overflow; console errors `0`; screenshots passed | Product API read/refetch `200`; route-transition abort bersifat sementara dan retry berhasil |
+| INT-P6-T001 | Integration | FE/BE | pending | Integrasikan Cash Tracking API ke dashboard, invalidation setelah saldo/transaksi berubah, dan verifikasi live create/edit/delete/summary pada desktop dan mobile | FE-P9-T003, BE-P8-T002 | Pending implementation; wajib backend tests, frontend lint/typecheck/build, Playwright 390x844 dan 1440x900, URL/H1, network failure, console errors, persistence, dan screenshots | Tidak ada koneksi ATM/bank/e-wallet; simpan evidence hanya di `screenshots/` |
 
 ## Execution Rules
 
