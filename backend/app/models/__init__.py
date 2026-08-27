@@ -2,6 +2,7 @@ from app.models.audit import AuditLog
 from app.models.auth import AuthSession, PasswordResetToken, User
 from app.models.base import Base
 from app.models.business import Business, BusinessPricingSetting
+from app.models.cash import CashBalance, CashTransaction
 from app.models.cost import ProductCostVersion
 from app.models.ingredient import Ingredient, IngredientPriceHistory, IngredientUnitConversion
 from app.models.overhead import Overhead
@@ -15,6 +16,8 @@ __all__ = [
     "Base",
     "Business",
     "BusinessPricingSetting",
+    "CashBalance",
+    "CashTransaction",
     "ProductCostVersion",
     "Ingredient",
     "IngredientPriceHistory",

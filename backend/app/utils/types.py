@@ -41,6 +41,11 @@ class RecommendationStatus(StrEnum):
     DISMISSED = "DISMISSED"
 
 
+class CashTransactionType(StrEnum):
+    INCOME = "INCOME"
+    EXPENSE = "EXPENSE"
+
+
 def parse_decimal(value: object) -> Decimal:
     if isinstance(value, bool):
         raise TypeError("boolean is not a valid decimal value")

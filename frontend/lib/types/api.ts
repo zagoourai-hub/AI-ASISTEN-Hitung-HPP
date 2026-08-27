@@ -8,6 +8,7 @@ export type RecipeStatus = "DRAFT" | "ACTIVE" | "ARCHIVED"
 export type AllocationMethod = "MANUAL_PER_UNIT"
 export type RoundingStrategy = "NONE" | "NEAREST_100" | "CUSTOM"
 export type RecommendationStatus = "DRAFT" | "APPLIED" | "DISMISSED"
+export type CashTransactionType = "INCOME" | "EXPENSE"
 
 export type SemanticErrorCode =
   | "VALIDATION_ERROR"
@@ -222,6 +223,37 @@ export interface BusinessProfile {
   timezone: string
   default_target_margin: DecimalString
   pricing_setting: BusinessPricingSetting | null
+}
+
+// --- Manual Cash Tracking ---
+
+export interface CashBalance {
+  id: string
+  businessId: string
+  openingBalance: DecimalString
+  updatedAt: string
+}
+
+export interface CashTransaction {
+  id: string
+  businessId: string
+  type: CashTransactionType
+  amount: DecimalString
+  category: string | null
+  note: string | null
+  transactionDate: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CashSummary {
+  openingBalance: DecimalString
+  totalIncome: DecimalString
+  totalExpense: DecimalString
+  netCashflow: DecimalString
+  closingBalance: DecimalString
+  dateFrom: string
+  dateTo: string
 }
 
 export interface AuthSessionResponse {

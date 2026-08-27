@@ -17,6 +17,7 @@ import { ApiError } from "@/lib/api/client"
 import { mapSemanticErrorToMessage } from "@/lib/api/error-mapper"
 import { formatIDR, formatPercent, parseDecimalToNumber } from "@/lib/format"
 import type { ProductCostVersion } from "@/lib/types/api"
+import { CashTrackingSection } from "@/components/dashboard/cash-tracking"
 
 export default function DashboardPage() {
   const productsQuery = useQuery({ queryKey: ["products"], queryFn: ({ signal }) => listProducts(signal) })
@@ -105,6 +106,8 @@ export default function DashboardPage() {
         <MetricCard label="Margin Rata-rata" value={loadedCosts.length ? formatPercent(metrics.averageMargin) : "-"} caption={loadedCosts.length ? `Target ${formatPercent(targetMargin)}` : "Hitung HPP untuk melihat margin"} Icon={Target} />
         <MetricCard label="Produk Aktif" value={String(activeProducts.length)} caption={`${variants.length} varian terhubung`} Icon={Package} />
       </section>
+
+      <CashTrackingSection />
 
       <section aria-label="Analisis Biaya & Produk" className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="flex flex-col justify-between">

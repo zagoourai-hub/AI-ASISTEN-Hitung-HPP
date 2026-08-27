@@ -13,6 +13,7 @@ from app.utils.types import RoundingStrategy, utc_now
 
 if TYPE_CHECKING:
     from app.models.auth import User
+    from app.models.cash import CashBalance, CashTransaction
 
 MARGIN_NUMERIC = Numeric(precision=5, scale=4, asdecimal=True)
 
@@ -70,6 +71,17 @@ class Business(Base):
         "BusinessPricingSetting",
         back_populates="business",
         uselist=False,
+        cascade="all, delete-orphan",
+    )
+    cash_balance: Mapped[CashBalance | None] = relationship(
+        "CashBalance",
+        back_populates="business",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    cash_transactions: Mapped[list[CashTransaction]] = relationship(
+        "CashTransaction",
+        back_populates="business",
         cascade="all, delete-orphan",
     )
 

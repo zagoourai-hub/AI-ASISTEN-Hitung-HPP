@@ -41,6 +41,7 @@ def test_overhead_migration_is_registered_after_recipes() -> None:
     revisions = list(ScriptDirectory.from_config(config).walk_revisions("base", "heads"))
 
     assert [revision.revision for revision in revisions[:8]] == [
+        "0013_cash_tracking",
         "0012_product_images",
         "0011_audit_logs",
         "0010_recommendation_drafts",
@@ -48,5 +49,4 @@ def test_overhead_migration_is_registered_after_recipes() -> None:
         "0008_ingredient_archive",
         "0007_overheads",
         "0006_recipes",
-        "0005_products",
     ]

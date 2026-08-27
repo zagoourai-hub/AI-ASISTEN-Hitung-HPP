@@ -106,6 +106,7 @@ def test_product_migration_is_registered_after_ingredient_migration() -> None:
     revisions = list(scripts.walk_revisions("base", "heads"))
 
     assert [revision.revision for revision in revisions] == [
+        "0013_cash_tracking",
         "0012_product_images",
         "0011_audit_logs",
         "0010_recommendation_drafts",

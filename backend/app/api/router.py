@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.routes.ai import router as ai_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.business import router as business_router
+from app.api.routes.cash import router as cash_router
 from app.api.routes.discount import router as discount_router
 from app.api.routes.health import router as health_router
 from app.api.routes.hpp import router as hpp_router
@@ -16,6 +17,7 @@ api_router = APIRouter()
 api_router.include_router(auth_router)
 api_router.include_router(ai_router)
 api_router.include_router(business_router)
+api_router.include_router(cash_router)
 api_router.include_router(health_router)
 api_router.include_router(hpp_router)
 api_router.include_router(ingredients_router)

@@ -1,5 +1,6 @@
 from app.utils.types import (
     AllocationMethod,
+    CashTransactionType,
     EntityId,
     Money,
     ProductStatus,
@@ -19,6 +20,7 @@ from app.utils.types import (
 
 __all__ = [
     "AllocationMethod",
+    "CashTransactionType",
     "EntityId",
     "Money",
     "ProductStatus",
