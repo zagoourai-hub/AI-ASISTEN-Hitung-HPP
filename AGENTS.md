@@ -165,7 +165,7 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - Frontend: Next.js 16.3 + Tailwind CSS v4 + TypeScript strict + Lucide Icons.
 - Backend: FastAPI + SQLAlchemy 2.x async + PostgreSQL + Alembic.
 - API Base Path: `/api/v1` with httpOnly cookie authentication forwarding.
-- Project checkpoint: 86 total task; 75 completed, 0 in progress, 6 pending, 5 skipped. Frontend 25/28, backend 35/37, dan integration 10/11 completed with Cash Tracking pending. AI: 5 completed, 0 in progress, 5 skipped.
+- Project checkpoint: 86 total task; 77 completed, 3 in progress, 1 pending, 5 skipped. Frontend 25/28 completed, backend 37/37 completed, dan integration 10/11 completed. AI: 5 completed, 0 in progress, 5 skipped.
 
 ### Phase Status
 - **[FE] Phase 0:** COMPLETED (Environment, Base URL, Error & API Contract Types, Formatters, Feedback Primitives).
@@ -181,8 +181,8 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - **[BE] Phase 4:** COMPLETED (security, edge-case, live PostgreSQL pilot p95, timeout/conflict handling, runbook, structured logging, OpenAPI, and CI verification).
 - **[BE] Phase 5-7:** COMPLETED (local product image storage/API, price-history delete, dan product rename/archive contract regression).
 - **[INT] sampai INT-P5-T001:** COMPLETED (MVP, product image, ingredient/product management, serta product responsive live verification).
-- **[FE] Phase 9:** PENDING (Cash Tracking dashboard: saldo awal manual, pemasukan, pengeluaran, edit/delete, dan ringkasan saldo).
-- **[BE] Phase 8:** PENDING (CashBalance/CashTransaction, migration, tenant-scoped CRUD, dan period summary).
+- **[FE] Phase 9:** IN PROGRESS (Cash Tracking dashboard sudah memiliki saldo awal, pemasukan, pengeluaran, edit/delete, filter periode, dan ringkasan; typecheck/build/browser verification tertunda karena dependency frontend tidak lengkap).
+- **[BE] Phase 8:** COMPLETED (CashBalance/CashTransaction, migration, tenant-scoped CRUD, period summary, Decimal contract, audit, dan regression tests).
 - **[INT] INT-P6-T001:** PENDING (Cash Tracking live integration dan responsive verification).
 - **[AI] AI-P0-T009:** COMPLETED (chat teks incremental, parser SSE multi-event, deterministic `done`, UI desktop/mobile, error/retry, dan quality gates terverifikasi).
 - **[AI] AI-P0-T010:** COMPLETED (history sesi Zustand, sinkronisasi jawaban streaming, pemulihan item, Chat baru non-destruktif, dan format jawaban modern; Playwright regression lulus).
@@ -201,15 +201,15 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
   - `/reports` placeholder page untuk route safety tanpa 404 prefetch errors.
 - **[BE] Auth & tenant**: BE-P1-T001 sampai BE-P1-T007 selesai dengan cookie httpOnly, reset token one-time, generic reset response, rate limit, dan authenticated business scope.
 - **[BE] Ingredient foundation**: BE-P2-T001 selesai dengan `Ingredient`, `IngredientPriceHistory`, `IngredientUnitConversion`, Alembic `0004_ingredients`, positive constraints, dan direct conversion uniqueness.
-- **[BE] Verification**: 101 backend tests passed; Ruff check/format dan Pyright 0 errors; Alembic full offline upgrade/downgrade terverifikasi. Security 22 tests and edge-case 40 tests passed; live ephemeral PostgreSQL 16 pilot p95 HPP calculation 11.60 ms and HPP history 8.30 ms against the <500 ms target; timeout/conflict handling, structured JSON request logging, OpenAPI export, CI verification script, and backup/restore runbook completed.
+- **[BE] Verification**: 122 backend tests passed; Ruff check/format dan Pyright 0 errors; Alembic full offline upgrade/downgrade terverifikasi termasuk migration `0013_cash_tracking`. Security 22 tests and edge-case 40 tests passed; live ephemeral PostgreSQL 16 pilot p95 HPP calculation 11.60 ms and HPP history 8.30 ms against the <500 ms target; timeout/conflict handling, structured JSON request logging, OpenAPI export, CI verification script, and backup/restore runbook completed.
 - **[FE] Feedback UI — 2026-08-25**: `ToastProvider` memakai Radix Toast satu-per-satu untuk login/register/logout success/error; viewport toast berada di atas-tengah desktop/mobile. `PageSkeleton` dan `DashboardSkeleton` mengikuti state `isPending` session/products/business tanpa `setTimeout` atau delay loading buatan; reduced-motion dan focus/touch target diperhatikan.
 - **[FE] Live verification — 2026-08-25**: register `201` dan login `200` redirect ke dashboard dengan toast sukses; invalid login menampilkan toast error; screenshot tersimpan di `screenshots/`; successful flow console error `0`. Beberapa GET sempat `ERR_ABORTED` saat route transition lalu retry `200`, bukan kegagalan final API.
 - **[Security Audit]**: `SECURITY-AUDIT.md` berstatus PASS WITH WARNINGS; `boto4`/`reqcrypts` tidak ditemukan pada manifest, lockfile, source, atau environment lokal. `pip-audit` dan OWASP ZAP dilewati karena tool tidak tersedia.
 - **[Post-MVP Product Updates]**: product image lokal, edit bahan/histori harga, edit/archive produk, dan layout Produk responsif telah selesai serta diverifikasi live pada viewport mobile/tablet/desktop.
 - **[AI Chat]**: `AI-P0-T008` sampai `AI-P0-T010` completed. Chat satu kolom memakai snapshot tenant terbaru, plain text incremental, history sesi Zustand maksimal 20 item, selection restore, dan Chat baru non-destruktif; persistence lintas tenant sengaja belum dibuka.
-- **[Finance — Cash Tracking]**: PRD section 4.6 dan enam task pending dibuka untuk saldo awal manual editable serta transaksi `INCOME`/`EXPENSE`. Scope tidak terhubung ke ATM, bank, e-wallet, POS, inventory, atau rekonsiliasi.
+- **[Finance — Cash Tracking]**: `BE-P8-T001` dan `BE-P8-T002` completed. `FE-P9-T001` sampai `FE-P9-T003` sudah diimplementasikan pada `CashTrackingSection` dan `lib/api/cash.ts`, tetapi typecheck/build/Playwright menunggu dependency frontend dipulihkan. Scope tidak terhubung ke ATM, bank, e-wallet, POS, inventory, atau rekonsiliasi.
 
 ### Task Selanjutnya (All Layers)
-- Cash Tracking belum dieksekusi. Saat user memberi instruksi eksekusi, mulai dari `BE-P8-T001`, lanjut `BE-P8-T002`, `FE-P9-T001` sampai `FE-P9-T003`, lalu `INT-P6-T001`; tetap satu task aktif dan update tracker setelah verifikasi.
+- Pulihkan atau sediakan dependency frontend, lalu verifikasi `FE-P9-T001` sampai `FE-P9-T003` dengan typecheck, lint, build, dan Playwright desktop/mobile. Setelah itu lanjutkan `INT-P6-T001`; tetap satu task aktif dan update tracker setelah verifikasi.
 
 > File pasangan `CLAUDE.md` wajib byte-identical dengan dokumen ini.

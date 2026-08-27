@@ -14,8 +14,8 @@ Last Updated: 2026-08-27
 - Cash Tracking manual dibuka sebagai fase post-MVP baru: saldo awal editable, pemasukan,
   pengeluaran, dan summary saldo dashboard; tidak terhubung ke ATM/bank/e-wallet.
 - AI Assistant integration adalah scope post-MVP terpisah. Kontrak aktif memakai chat teks streaming incremental; structured analyst UI dihentikan.
-- Frontend Phase 0-8, Backend Phase 0-7, dan Integration sampai `INT-P5-T001` selesai.
-  Backend Cash Tracking selesai; frontend Cash Tracking sedang diimplementasikan.
+- Frontend Phase 0-8, Backend Phase 0-8, dan Integration sampai `INT-P5-T001` selesai.
+  Backend Cash Tracking selesai; frontend Cash Tracking sudah diimplementasikan dan menunggu verifikasi toolchain.
 
 ## Summary
 
@@ -125,7 +125,10 @@ Last Updated: 2026-08-27
 - Formula: `closing_balance = opening_balance + total_income - total_expense` pada periode aktif;
   default periode adalah bulan kalender berjalan.
 - Tidak ada koneksi ATM, bank, e-wallet, POS, inventory, rekening kas, rekonsiliasi, atau
-  profit/loss. Tidak ada kode yang dieksekusi pada checkpoint ini.
+  profit/loss.
+- Status checkpoint: `BE-P8-T001` dan `BE-P8-T002` completed dengan 122 backend tests lulus;
+  `FE-P9-T001` sampai `FE-P9-T003` implemented dan menunggu typecheck/build/Playwright karena
+  dependency frontend tidak lengkap; `INT-P6-T001` masih pending.
 
 ## Phase Gates
 
