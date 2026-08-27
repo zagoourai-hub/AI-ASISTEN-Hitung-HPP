@@ -26,6 +26,8 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@playwright/mcp": "^0.0.79",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

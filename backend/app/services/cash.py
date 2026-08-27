@@ -39,9 +39,17 @@ class CashService:
         self.repository = repository or CashRepository()
 
     async def get_balance(self, *, business_id: UUID) -> CashBalance:
-        balance = await self.repository.find_balance(self.session, business_id=business_id)
-        if balance is None:
-            raise self._not_found("Cash balance")
+        async with self.session.begin():
+            balance = await self.repository.find_balance(self.session, business_id=business_id)
+            if balance is None:
+                balance = CashBalance(
+                    id=new_id(),
+                    business_id=business_id,
+                    opening_balance=Decimal("0.0000"),
+                    updated_at=utc_now(),
+                )
+                self.repository.add_balance(self.session, balance)
+                await self.session.flush()
         return balance
 
     async def update_balance(

@@ -275,7 +275,7 @@ export default function AIAssistantPage() {
               <p className="mb-3 text-xs font-semibold text-primary">HPP Pintar AI</p>
               <div aria-live="polite" className="text-base leading-7 text-foreground">
                 {answer ? (
-                  <p className="whitespace-pre-wrap">
+                  <div className="whitespace-pre-wrap [overflow-wrap:anywhere]">
                     <AssistantText content={answer} />
                     {isStreaming && (
                       <span
@@ -283,7 +283,7 @@ export default function AIAssistantPage() {
                         className="ms-1 inline-block h-5 w-0.5 translate-y-1 bg-primary motion-safe:animate-pulse"
                       />
                     )}
-                  </p>
+                  </div>
                 ) : isStreaming ? (
                   <p role="status" className="text-sm text-muted-foreground">
                     Menyiapkan jawaban dari data bisnis terbaru
