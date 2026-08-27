@@ -150,6 +150,13 @@ Saat diminta loop uji-perbaiki, berhenti hanya kalau acceptance criteria lolos d
 
 JANGAN klaim sukses kalau salah satu verifikasi wajib belum hijau. JANGAN melemahkan validasi/security demi test lolos.
 
+## Pelaporan Bug Playwright
+
+- Selesaikan pengujian web dengan Playwright, termasuk verifikasi URL/H1, error console, failed network request, serta viewport desktop dan mobile yang relevan.
+- Uji validasi form yang relevan: input wajib kosong, format atau batas nilai tidak valid, pesan error yang terhubung ke field, fokus pada error, dan pastikan request mutasi tidak terkirim saat validasi gagal.
+- Jika Playwright menemukan bug atau error, catat setiap temuan dalam `fix/report-bug.md`; buat folder `fix/` dan file tersebut bila belum ada.
+- Setiap laporan wajib memuat tanggal, langkah reproduksi, hasil aktual, hasil yang diharapkan, bukti URL/screenshot atau request terkait, dan status perbaikan.
+
 ## Proses PRD
 
 User umumnya sudah punya PRD. Tugas utama: review, validasi gap, lalu implement sesuai profile `nextjs-python`.
