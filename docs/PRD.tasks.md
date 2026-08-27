@@ -2,7 +2,7 @@
 
 Source PRD: `PRD.md`
 Profile/Stack: Next.js + TypeScript, FastAPI + Python, PostgreSQL, OpenAPI
-Last Updated: 2026-08-27
+Last Updated: 2026-08-28
 
 ## Scope Lock
 
@@ -129,6 +129,13 @@ Last Updated: 2026-08-27
 - Status checkpoint: `BE-P8-T001`, `BE-P8-T002`, `FE-P9-T001` sampai `FE-P9-T003`, dan
   `INT-P6-T001` completed. Frontend quality gates dan live desktop/mobile flow lulus;
   backend test suite Cash Tracking sebelumnya tetap mencatat 122 test lulus.
+
+## Cash Tracking Validation Follow-up — 2026-08-28
+
+- Playwright mobile 390x844 mengonfirmasi validasi nominal kosong dan saldo awal negatif
+  menahan request mutasi; URL Dashboard/H1 valid, console error `0`, dan tidak ada overflow horizontal.
+- Ditemukan aksesibilitas validation-focus: fokus tetap di tombol submit alih-alih field invalid.
+  Temuan, langkah reproduksi, bukti request, dan screenshot dicatat di `fix/report-bug.md`.
 
 ## Phase Gates
 
