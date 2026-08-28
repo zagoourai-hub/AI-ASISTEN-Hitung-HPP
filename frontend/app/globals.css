@@ -150,6 +150,14 @@
   .safe-area-bottom {
     padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
   }
+  section[aria-label="Resep dan Komposisi Bahan"] th:nth-child(3),
+  section[aria-label="Resep dan Komposisi Bahan"] td:nth-child(3) {
+    padding-inline-end: 1rem;
+  }
+  section[aria-label="Resep dan Komposisi Bahan"] th:nth-child(4),
+  section[aria-label="Resep dan Komposisi Bahan"] td:nth-child(4) {
+    padding-inline-start: 1rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -160,5 +168,11 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 639px) {
+  section[aria-label="Resep dan Komposisi Bahan"] table {
+    min-width: 100% !important;
   }
 }

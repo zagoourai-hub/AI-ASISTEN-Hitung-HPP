@@ -134,8 +134,10 @@ Last Updated: 2026-08-28
 
 - Playwright mobile 390x844 mengonfirmasi validasi nominal kosong dan saldo awal negatif
   menahan request mutasi; URL Dashboard/H1 valid, console error `0`, dan tidak ada overflow horizontal.
-- Ditemukan aksesibilitas validation-focus: fokus tetap di tombol submit alih-alih field invalid.
-  Temuan, langkah reproduksi, bukti request, dan screenshot dicatat di `fix/report-bug.md`.
+- Aksesibilitas validation-focus diperbaiki: form saldo awal dan transaksi kini memindahkan fokus ke
+  field invalid. Retest Playwright desktop 1440x900 dan mobile 390x844 memverifikasi URL/H1,
+  error inline, fokus, console `0`, tidak ada request mutasi saat invalid, dan tanpa overflow.
+  Temuan serta bukti disimpan di `fix/report-bug.md` dan `screenshots/cash-tracking-validation-focus-*.png`.
 
 ## Phase Gates
 
