@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowDownLeft,
@@ -188,16 +188,20 @@ function CashMetric({ label, value, icon, tone, prominent = false }: { label: st
 function BalanceForm({ initialValue, isPending, onSubmit }: { initialValue: string; isPending: boolean; onSubmit: (value: string) => void }) {
   const [value, setValue] = useState(initialValue)
   const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0) {
       setError("Masukkan saldo awal IDR nol atau lebih.")
+      inputRef.current?.focus()
       return
     }
     setError(null)
     onSubmit(value.trim())
   }
-  return <Card><CardHeader className="p-0 pb-4"><CardTitle>Saldo awal</CardTitle><CardDescription>Atur saldo kas manual untuk periode perhitungan.</CardDescription></CardHeader><form onSubmit={submit} noValidate><label htmlFor="opening-balance" className="text-xs font-semibold text-[#444B47] dark:text-[#D5DAD7]">Saldo awal (IDR)</label><Input id="opening-balance" className="mt-2" type="number" min="0" step="0.0001" inputMode="decimal" value={value} onChange={(event) => { setValue(event.target.value); setError(null) }} aria-invalid={Boolean(error)} aria-describedby={error ? "opening-balance-error" : "opening-balance-help"} /><p id="opening-balance-help" className="mt-1.5 text-[11px] text-[#737B76] dark:text-[#98A09B]">Boleh diubah kapan saja. Tidak terhubung ke rekening eksternal.</p>{error && <p id="opening-balance-error" role="alert" className="mt-1.5 text-xs font-medium text-[#991B1B]">{error}</p>}<Button type="submit" size="sm" className="mt-4" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan saldo"}</Button></form></Card>
+
+  return <Card><CardHeader className="p-0 pb-4"><CardTitle>Saldo awal</CardTitle><CardDescription>Atur saldo kas manual untuk periode perhitungan.</CardDescription></CardHeader><form onSubmit={submit} noValidate><label htmlFor="opening-balance" className="text-xs font-semibold text-[#444B47] dark:text-[#D5DAD7]">Saldo awal (IDR)</label><Input ref={inputRef} id="opening-balance" className="mt-2" type="number" min="0" step="0.0001" inputMode="decimal" value={value} onChange={(event) => { setValue(event.target.value); setError(null) }} aria-invalid={Boolean(error)} aria-describedby={error ? "opening-balance-error" : "opening-balance-help"} /><p id="opening-balance-help" className="mt-1.5 text-[11px] text-[#737B76] dark:text-[#98A09B]">Boleh diubah kapan saja. Tidak terhubung ke rekening eksternal.</p>{error && <p id="opening-balance-error" role="alert" className="mt-1.5 text-xs font-medium text-[#991B1B]">{error}</p>}<Button type="submit" size="sm" className="mt-4" disabled={isPending}>{isPending ? "Menyimpan..." : "Simpan saldo"}</Button></form></Card>
 }
 
 function TransactionForm({ initialTransaction, isPending, onCancel, onSubmit }: { initialTransaction: CashTransaction | null; isPending: boolean; onCancel: () => void; onSubmit: (payload: Partial<CashTransactionPayload>) => void }) {
@@ -211,10 +215,12 @@ function TransactionForm({ initialTransaction, isPending, onCancel, onSubmit }: 
     event.preventDefault()
     if (!amount.trim() || !Number.isFinite(Number(amount)) || Number(amount) <= 0) {
       setError("Masukkan nominal transaksi yang lebih besar dari nol.")
+      document.getElementById("cash-amount")?.focus()
       return
     }
     if (!transactionDate) {
       setError("Pilih tanggal transaksi.")
+      document.getElementById("cash-date")?.focus()
       return
     }
     setError(null)
