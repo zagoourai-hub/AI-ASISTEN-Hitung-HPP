@@ -159,13 +159,13 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 
 `loop-engineering, security-audit, git-workflow, analyze-prd, execute-prd, test-fix-loop, nextjs-python, test-live, ui-clone`
 
-## Status Proyek & Progress Tracking (Updated: 2026-08-27)
+## Status Proyek & Progress Tracking (Updated: 2026-10-16)
 
 ### Konfigurasi Khusus Fase
 - Frontend: Next.js 16.3 + Tailwind CSS v4 + TypeScript strict + Lucide Icons.
 - Backend: FastAPI + SQLAlchemy 2.x async + PostgreSQL + Alembic.
 - API Base Path: `/api/v1` with httpOnly cookie authentication forwarding.
-- Project checkpoint: 86 total task; 77 completed, 3 in progress, 1 pending, 5 skipped. Frontend 25/28 completed, backend 37/37 completed, dan integration 10/11 completed. AI: 5 completed, 0 in progress, 5 skipped.
+- Project checkpoint: 86 total task; 81 completed, 0 in progress, 0 pending, 5 skipped. Frontend 28/28 completed, backend 37/37 completed, dan integration 11/11 completed. AI: 5 completed, 0 in progress, 5 skipped.
 
 ### Phase Status
 - **[FE] Phase 0:** COMPLETED (Environment, Base URL, Error & API Contract Types, Formatters, Feedback Primitives).
@@ -181,9 +181,9 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
 - **[BE] Phase 4:** COMPLETED (security, edge-case, live PostgreSQL pilot p95, timeout/conflict handling, runbook, structured logging, OpenAPI, and CI verification).
 - **[BE] Phase 5-7:** COMPLETED (local product image storage/API, price-history delete, dan product rename/archive contract regression).
 - **[INT] sampai INT-P5-T001:** COMPLETED (MVP, product image, ingredient/product management, serta product responsive live verification).
-- **[FE] Phase 9:** IN PROGRESS (Cash Tracking dashboard sudah memiliki saldo awal, pemasukan, pengeluaran, edit/delete, filter periode, dan ringkasan; typecheck/build/browser verification tertunda karena dependency frontend tidak lengkap).
+- **[FE] Phase 9:** COMPLETED (Cash Tracking dashboard: saldo awal, pemasukan, pengeluaran, edit/delete, filter periode, dan ringkasan; typecheck, lint, build, dan Playwright desktop/mobile lulus).
 - **[BE] Phase 8:** COMPLETED (CashBalance/CashTransaction, migration, tenant-scoped CRUD, period summary, Decimal contract, audit, dan regression tests).
-- **[INT] INT-P6-T001:** PENDING (Cash Tracking live integration dan responsive verification).
+- **[INT] INT-P6-T001:** COMPLETED (Cash Tracking live integration dan responsive verification).
 - **[AI] AI-P0-T009:** COMPLETED (chat teks incremental, parser SSE multi-event, deterministic `done`, UI desktop/mobile, error/retry, dan quality gates terverifikasi).
 - **[AI] AI-P0-T010:** COMPLETED (history sesi Zustand, sinkronisasi jawaban streaming, pemulihan item, Chat baru non-destruktif, dan format jawaban modern; Playwright regression lulus).
 
@@ -201,15 +201,16 @@ Kalau diminta membuat PRD baru, tanyakan kebutuhan inti dulu dan tulis phase -> 
   - `/reports` placeholder page untuk route safety tanpa 404 prefetch errors.
 - **[BE] Auth & tenant**: BE-P1-T001 sampai BE-P1-T007 selesai dengan cookie httpOnly, reset token one-time, generic reset response, rate limit, dan authenticated business scope.
 - **[BE] Ingredient foundation**: BE-P2-T001 selesai dengan `Ingredient`, `IngredientPriceHistory`, `IngredientUnitConversion`, Alembic `0004_ingredients`, positive constraints, dan direct conversion uniqueness.
-- **[BE] Verification**: 122 backend tests passed; Ruff check/format dan Pyright 0 errors; Alembic full offline upgrade/downgrade terverifikasi termasuk migration `0013_cash_tracking`. Security 22 tests and edge-case 40 tests passed; live ephemeral PostgreSQL 16 pilot p95 HPP calculation 11.60 ms and HPP history 8.30 ms against the <500 ms target; timeout/conflict handling, structured JSON request logging, OpenAPI export, CI verification script, and backup/restore runbook completed.
+- **[BE] Verification**: 130 backend tests passed (2026-10-16); Ruff check/format dan Pyright 0 errors; Alembic full offline upgrade/downgrade terverifikasi termasuk migration `0013_cash_tracking`. Security 22 tests and edge-case 40 tests passed; live ephemeral PostgreSQL 16 pilot p95 HPP calculation 11.60 ms and HPP history 8.30 ms against the <500 ms target; timeout/conflict handling, structured JSON request logging, OpenAPI export, CI verification script, and backup/restore runbook completed.
 - **[FE] Feedback UI — 2026-08-25**: `ToastProvider` memakai Radix Toast satu-per-satu untuk login/register/logout success/error; viewport toast berada di atas-tengah desktop/mobile. `PageSkeleton` dan `DashboardSkeleton` mengikuti state `isPending` session/products/business tanpa `setTimeout` atau delay loading buatan; reduced-motion dan focus/touch target diperhatikan.
 - **[FE] Live verification — 2026-08-25**: register `201` dan login `200` redirect ke dashboard dengan toast sukses; invalid login menampilkan toast error; screenshot tersimpan di `screenshots/`; successful flow console error `0`. Beberapa GET sempat `ERR_ABORTED` saat route transition lalu retry `200`, bukan kegagalan final API.
 - **[Security Audit]**: `SECURITY-AUDIT.md` berstatus PASS WITH WARNINGS; `boto4`/`reqcrypts` tidak ditemukan pada manifest, lockfile, source, atau environment lokal. `pip-audit` dan OWASP ZAP dilewati karena tool tidak tersedia.
 - **[Post-MVP Product Updates]**: product image lokal, edit bahan/histori harga, edit/archive produk, dan layout Produk responsif telah selesai serta diverifikasi live pada viewport mobile/tablet/desktop.
 - **[AI Chat]**: `AI-P0-T008` sampai `AI-P0-T010` completed. Chat satu kolom memakai snapshot tenant terbaru, plain text incremental, history sesi Zustand maksimal 20 item, selection restore, dan Chat baru non-destruktif; persistence lintas tenant sengaja belum dibuka.
-- **[Finance — Cash Tracking]**: `BE-P8-T001` dan `BE-P8-T002` completed. `FE-P9-T001` sampai `FE-P9-T003` sudah diimplementasikan pada `CashTrackingSection` dan `lib/api/cash.ts`, tetapi typecheck/build/Playwright menunggu dependency frontend dipulihkan. Scope tidak terhubung ke ATM, bank, e-wallet, POS, inventory, atau rekonsiliasi.
+- **[Finance — Cash Tracking]**: `BE-P8-T001`, `BE-P8-T002`, `FE-P9-T001` sampai `FE-P9-T003`, dan `INT-P6-T001` completed dan terverifikasi live (`CashTrackingSection`, `lib/api/cash.ts`). Scope tidak terhubung ke ATM, bank, e-wallet, POS, inventory, atau rekonsiliasi.
+- **[Backend Abuse & Cost Guard — 2026-10-16]**: IP klien asli via `HPP_TRUSTED_PROXY_CIDRS` + `HPP_CLIENT_IP_HEADER` (XFF dibaca kanan-ke-kiri, IPv6 digabung per /64); register dibatasi per IP (default 3/24 jam); kuota harian AI per bisnis (100) dan per IP (200); model OpenRouter non-free ditolak kecuali `HPP_OPENROUTER_ALLOW_PAID_MODELS=true`. Limiter masih in-memory per proses (butuh Redis untuk multi-worker). Test `test_cash` disesuaikan dengan `get_balance` yang membuat saldo awal Rp0 secara lazy.
 
 ### Task Selanjutnya (All Layers)
-- Pulihkan atau sediakan dependency frontend, lalu verifikasi `FE-P9-T001` sampai `FE-P9-T003` dengan typecheck, lint, build, dan Playwright desktop/mobile. Setelah itu lanjutkan `INT-P6-T001`; tetap satu task aktif dan update tracker setelah verifikasi.
+- Semua task tracker selesai atau di-skip. Prioritas berikutnya (belum ada task di tracker): set `HPP_TRUSTED_PROXY_CIDRS` saat deploy, verifikasi email/captcha untuk register, Redis rate limit bila multi-worker, kuota gambar per bisnis, dan review 5 task AI yang di-skip.
 
 > File pasangan `CLAUDE.md` wajib byte-identical dengan dokumen ini.

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from ipaddress import ip_network
 from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
@@ -8,6 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 Environment = Literal["development", "test", "staging", "production"]
 SameSitePolicy = Literal["lax", "strict", "none"]
 RateLimitBackend = Literal["memory", "redis"]
+ClientIpHeader = Literal["x-forwarded-for", "cf-connecting-ip", "x-real-ip"]
 
 
 class Settings(BaseSettings):
@@ -47,6 +49,14 @@ class Settings(BaseSettings):
     rate_limit_requests: Annotated[int, Field(gt=0, le=10_000)] = 60
     rate_limit_login_requests: Annotated[int, Field(gt=0, le=100)] = 5
     rate_limit_ai_requests: Annotated[int, Field(gt=0, le=100)] = 20
+    rate_limit_ai_daily_business_requests: Annotated[int, Field(gt=0, le=10_000)] = 100
+    rate_limit_ai_daily_ip_requests: Annotated[int, Field(gt=0, le=10_000)] = 200
+    rate_limit_register_requests: Annotated[int, Field(gt=0, le=100)] = 3
+    rate_limit_register_window_seconds: Annotated[int, Field(gt=0, le=604_800)] = 86_400
+
+    # Only peers inside these CIDRs may supply client IP headers; empty = trust none.
+    trusted_proxy_cidrs: list[str] = Field(default_factory=list)
+    client_ip_header: ClientIpHeader = "x-forwarded-for"
 
     openrouter_api_key: SecretStr | None = None
     openrouter_model: Annotated[str, Field(min_length=1, max_length=120)] = "openrouter/free"
@@ -57,6 +67,7 @@ class Settings(BaseSettings):
     openrouter_app_title: Annotated[str, Field(min_length=1, max_length=100)] = "HPP Pintar"
     openrouter_timeout_seconds: Annotated[float, Field(gt=0, le=300)] = 60.0
     openrouter_max_tokens: Annotated[int, Field(gt=0, le=4096)] = 800
+    openrouter_allow_paid_models: bool = False
 
     @field_validator("database_url")
     @classmethod
@@ -72,6 +83,16 @@ class Settings(BaseSettings):
         if len(value.get_secret_value()) < 32:
             raise ValueError("secret_key must contain at least 32 characters")
         return value
+
+    @field_validator("trusted_proxy_cidrs")
+    @classmethod
+    def validate_trusted_proxy_cidrs(cls, cidrs: list[str]) -> list[str]:
+        for cidr in cidrs:
+            try:
+                ip_network(cidr, strict=False)
+            except ValueError as error:
+                raise ValueError(f"invalid trusted proxy CIDR: {cidr}") from error
+        return cidrs
 
     @field_validator("cors_allowed_origins")
     @classmethod
@@ -94,6 +115,12 @@ class Settings(BaseSettings):
             raise ValueError("SameSite=None requires a secure session cookie")
         if self.environment == "production" and not self.session_cookie_secure:
             raise ValueError("production requires a secure session cookie")
+        model = self.openrouter_model
+        is_free_model = model == "openrouter/free" or model.endswith(":free")
+        if not is_free_model and not self.openrouter_allow_paid_models:
+            raise ValueError(
+                "openrouter_model must be a free model unless openrouter_allow_paid_models is true"
+            )
         return self
 
 

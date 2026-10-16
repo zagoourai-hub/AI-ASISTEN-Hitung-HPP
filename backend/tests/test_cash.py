@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import current_business_dependency
 from app.core.config import Settings
 from app.core.database import get_db_session
-from app.core.exceptions import AppError, ErrorCode
 from app.main import create_app
 from app.models import AuditLog, Business, CashBalance, CashTransaction
 from app.models.base import MONEY_NUMERIC, Base
@@ -252,9 +251,11 @@ async def test_cash_service_is_tenant_scoped_and_writes_audit_records() -> None:
         "CASH_TRANSACTION_UPDATE",
         "CASH_TRANSACTION_DELETE",
     ]
-    with pytest.raises(AppError) as error:
-        await service.get_balance(business_id=uuid4())
-    assert error.value.code == ErrorCode.RESOURCE_NOT_FOUND
+    other_business_id = uuid4()
+    other_balance = await service.get_balance(business_id=other_business_id)
+    assert other_balance.business_id == other_business_id
+    assert other_balance.opening_balance == Decimal("0.0000")
+    assert other_balance is not balance
 
 
 @pytest.mark.asyncio

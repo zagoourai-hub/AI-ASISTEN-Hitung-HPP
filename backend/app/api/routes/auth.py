@@ -9,6 +9,7 @@ from app.core.database import get_db_session
 from app.core.rate_limit import (
     AuthRateLimitDependency,
     LoginRateLimitDependency,
+    RegisterRateLimitDependency,
 )
 from app.core.security import clear_session_cookie, set_session_cookie
 from app.schemas.auth import (
@@ -54,7 +55,7 @@ def to_auth_response(result: RegisterResult) -> RegisterResponse:
 async def register(
     payload: RegisterRequest,
     response: Response,
-    _rate_limit: AuthRateLimitDependency,
+    _rate_limit: RegisterRateLimitDependency,
     session: Annotated[AsyncSession, Depends(get_db_session)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> RegisterResponse:

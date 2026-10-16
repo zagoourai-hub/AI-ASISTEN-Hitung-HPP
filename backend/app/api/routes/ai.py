@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import CurrentBusinessDependency
 from app.core.config import Settings, get_settings
 from app.core.database import get_db_session
-from app.core.rate_limit import AiRateLimitDependency
+from app.core.rate_limit import AiRateLimitDependency, enforce_ai_business_quota
 from app.repositories.ai import AIContextRepository
 from app.schemas.ai import AIStreamRequest
 from app.services.ai import OpenRouterService
@@ -26,6 +26,7 @@ async def stream_ai_response(
 ) -> StreamingResponse:
     service = OpenRouterService(settings)
     service.ensure_configured()
+    enforce_ai_business_quota(settings, business.id)
     context = {
         "business": {
             "name": business.name,
