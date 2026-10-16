@@ -2,7 +2,7 @@
 
 Source PRD: `PRD.md`
 Profile/Stack: Next.js + TypeScript, FastAPI + Python, PostgreSQL, OpenAPI
-Last Updated: 2026-08-27
+Last Updated: 2026-10-16
 
 ## Scope Lock
 
@@ -14,19 +14,19 @@ Last Updated: 2026-08-27
 - Cash Tracking manual dibuka sebagai fase post-MVP baru: saldo awal editable, pemasukan,
   pengeluaran, dan summary saldo dashboard; tidak terhubung ke ATM/bank/e-wallet.
 - AI Assistant integration adalah scope post-MVP terpisah. Kontrak aktif memakai chat teks streaming incremental; structured analyst UI dihentikan.
-- Frontend Phase 0-8, Backend Phase 0-8, dan Integration sampai `INT-P5-T001` selesai.
-  Backend Cash Tracking selesai; frontend Cash Tracking sudah diimplementasikan dan menunggu verifikasi toolchain.
+- Frontend Phase 0-9, Backend Phase 0-8, dan Integration sampai `INT-P6-T001` selesai.
+  Cash Tracking (backend, frontend, live integration) selesai dan terverifikasi.
 
 ## Summary
 
 - Total: 86
-- Frontend: 28 (25 completed, 3 in progress, 0 pending)
+- Frontend: 28 (28 completed, 0 in progress, 0 pending)
 - Backend: 37 (37 completed, 0 in progress, 0 pending)
-- Integration: 11 (10 completed, 0 in progress, 1 pending, 0 blocked)
+- Integration: 11 (11 completed, 0 in progress, 0 pending, 0 blocked)
 - AI: 10 (5 completed, 0 in progress, 0 blocked, 0 pending, 5 skipped)
-- Completed: 77
-- In Progress: 3
-- Pending: 1
+- Completed: 81
+- In Progress: 0
+- Pending: 0
 - Blocked: 0
 - Skipped: 5
 
