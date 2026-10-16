@@ -107,9 +107,10 @@ export default function PricingPage() {
   const customRounding = useWatch({ control: form.control, name: "customRounding" })
   const roundingLabel = roundingStrategy === "CUSTOM" ? `Kelipatan ${customRounding}` : roundingStrategy === "NEAREST_100" ? "Ratusan terdekat" : "Tanpa pembulatan"
 
-  if (productsQuery.isPending || businessQuery.isPending) return <LoadingSpinner label="Memuat data pricing..." />
-  if (error && !selectedEntry) return <ErrorBanner code={error.code} message={mapSemanticErrorToMessage(error.code, error.message)} onRetry={() => productsQuery.refetch()} />
-  if (!selectedEntry || !variantId || !productId || !selectedVariant) return <EmptyState title="Belum ada varian produk" description="Tambahkan produk dan varian terlebih dahulu sebelum menggunakan Harga Pintar." />
+  const pageHeader = <Header title="Harga Pintar & Simulasi" showPeriodSelector={false} />
+  if (productsQuery.isPending || businessQuery.isPending) return <div className="space-y-6 pb-24">{pageHeader}<LoadingSpinner label="Memuat data pricing..." /></div>
+  if (error && !selectedEntry) return <div className="space-y-6 pb-24">{pageHeader}<ErrorBanner code={error.code} message={mapSemanticErrorToMessage(error.code, error.message)} onRetry={() => productsQuery.refetch()} /></div>
+  if (!selectedEntry || !variantId || !productId || !selectedVariant) return <div className="space-y-6 pb-24">{pageHeader}<EmptyState title="Belum ada varian produk" description="Tambahkan produk dan varian terlebih dahulu sebelum menggunakan Harga Pintar." /></div>
 
   const submitRecommendation = (values: PricingFormValues) => {
     recommendationMutation.mutate({ variantId: variantId as string, values })
@@ -117,7 +118,7 @@ export default function PricingPage() {
 
   return (
     <div className="space-y-6 pb-24">
-      <Header title="Harga Pintar & Simulasi" showPeriodSelector={false} />
+      {pageHeader}
 
       {error && <ErrorBanner code={error.code} message={mapSemanticErrorToMessage(error.code, error.message)} onRetry={() => { recommendationMutation.reset(); applyMutation.reset(); hppQuery.refetch() }} />}
       {applyMutation.isSuccess && <div role="status" className="flex items-center gap-2 rounded-xl border border-[#DDF5E7] bg-[#EEF9F2] p-3 text-xs text-[#10673C]"><CheckCircle2 className="h-4 w-4" />Harga jual berhasil diperbarui di backend.</div>}
